@@ -1,0 +1,38 @@
+[private]
+default: help
+
+# Shows this help message
+help:
+  @just --list
+
+build target="bun":
+  #!/usr/bin/env bash
+  echo Building Achilles-API for: {{target}}
+  bun build \
+    --compile \
+    --minify-whitespace \
+    --minify-syntax \
+    --target {{target}} \
+    --outfile build/achilles-api \
+      src/index.ts
+
+package-tar:
+  #!/usr/bin/env bash
+  rm -rf build
+  just build "bun-linux-arm64-musl"
+
+  mkdir -p build/usr/bin
+  mkdir -p build/etc/init.d
+  mkdir -p build/etc/conf.d
+
+  mv build/achilles-api build/usr/bin
+  cp res/achilles-api.initd build/etc/init.d/achilles-api
+  cp res/achilles-api.confd build/etc/conf.d/achilles-api
+  chmod 755 build/etc/init.d/achilles-api
+  chmod 755 build/usr/bin/achilles-api
+
+  rm *.tar.zst
+  tar -cvf - -C build . | zstd -T0 -o achilles-api.tar.zst
+
+dev:
+  @bun run dev

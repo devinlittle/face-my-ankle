@@ -1,0 +1,12 @@
+[workspace]
+resolver = "3"
+members = ["apps/ankle"]
+
+[workspace.package]
+authors = ["Devin Little <devinlittlee@gmail.com>"]
+repository = "https://git.home.devinlittle.net/devin/face-my-ankle.git"
+edition = "2024"
+license = "AGPL-3.0-only"
+
+[workspace.dependencies]
+rpi-pal = "0.22.3"

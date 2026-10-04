@@ -1,0 +1,75 @@
+set dotenv-load := true
+set shell := ["bash", "-uc"]
+
+project_home := `printf $(cd ../ && pwd)`
+scripts_dir := project_home / "os" / "scripts"
+common := scripts_dir / "common.sh"
+
+[private]
+default: help
+
+# Shows this help message
+help:
+  @just --list
+
+
+[private]
+check_linux:
+  #!/usr/bin/env bash
+  source {{common}}
+
+  case "$(uname)" in
+    Linux)
+      ;;
+    *)
+      die "The OS can only be built on a linux host."
+      ;;
+  esac
+
+
+rootfs: check_linux
+  #!/usr/bin/env bash
+  source {{common}}
+
+  ./scripts/create-rootfs.sh
+
+compress: check_linux
+  #!/usr/bin/env bash
+  source {{common}}
+
+  ./scripts/compress-image.sh
+
+cleanup: check_linux
+  #!/usr/bin/env bash
+  source {{common}}
+
+  ./scripts/cleanup.sh
+
+all: rootfs compress cleanup
+
+
+# Runs a checkup
+doctor:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  source {{common}}
+
+  i_need() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+       die "Missing required command: $1"
+    fi
+  }
+
+  i_need sfdisk
+  i_need losetup
+  i_need mkfs.vfat
+  i_need mkfs.ext4
+  i_need apk
+  i_need tar
+
+  if ! command -v xchroot >/dev/null && ! command -v arch-chroot >/dev/null; then
+    info "Please install 'arch-install-scripts' or 'xtools'"
+    die "Missing arch-chroot or xchroot"
+  fi
+
+  echo "All required tools found"

@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+
+name="achilles-ui"
+command="/usr/bin/achilles-ui"
+
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+export HOST
+export PORT
+
+depend() {
+    need net
+}

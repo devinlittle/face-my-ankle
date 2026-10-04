@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+
+name="achilles-api"
+command="/usr/bin/achilles-api"
+
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+export PORT
+
+depend() {
+    need net
+}

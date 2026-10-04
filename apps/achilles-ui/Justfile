@@ -1,0 +1,32 @@
+[private]
+default: help
+
+# Shows this help message
+help:
+  @just --list
+
+build target="bun":
+  #!/usr/bin/env bash
+  echo Building Achilles UI for: {{target}}
+  bun --bun run build
+
+package-tar:
+  #!/usr/bin/env bash
+  rm -rf build
+  just build "bun-linux-arm64-musl"
+
+  mkdir -p build/usr/bin
+  mkdir -p build/etc/init.d
+  mkdir -p build/etc/conf.d
+
+  mv build/achilles-ui* build/usr/bin
+  cp res/achilles-ui.initd build/etc/init.d/achilles-ui
+  cp res/achilles-ui.confd build/etc/conf.d/achilles-ui
+  chmod 755 build/etc/init.d/achilles-ui
+  chmod 755 build/usr/bin/achilles-ui
+
+  rm *.tar.zst
+  tar -cvf - -C build . | zstd -T0 -o achilles-ui.tar.zst
+
+dev:
+  @bun --bun run dev

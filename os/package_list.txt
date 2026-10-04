@@ -1,0 +1,29 @@
+# Core system
+alpine-base
+openrc
+busybox
+busybox-openrc
+musl
+ca-certificates
+tzdata
+zstd
+agetty
+
+# Pi Kernel + firmware
+linux-rpi
+linux-firmware-brcm
+raspberrypi-bootloader
+raspberrypi-bootloader-common
+
+# Networking
+iproute2
+iptables
+iw
+networkmanager
+networkmanager-wifi
+networkmanager-cli
+wpa_supplicant
+
+# maybe don't need?
+dnsmasq
+hostapd
