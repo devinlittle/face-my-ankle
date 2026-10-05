@@ -8,6 +8,7 @@ ca-certificates
 tzdata
 zstd
 agetty
+sudo
 
 # Pi Kernel + firmware
 linux-rpi
@@ -22,8 +23,6 @@ iw
 networkmanager
 networkmanager-wifi
 networkmanager-cli
-wpa_supplicant
-
-# maybe don't need?
 dnsmasq
 hostapd
+wpa_supplicant

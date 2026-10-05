@@ -15,6 +15,7 @@ export default defineConfig({
         {
           buildOptions: {
             compile: {
+              target: 'bun-linux-arm64-musl',
               outfile: 'achilles-ui',
             },
             minify: true,
