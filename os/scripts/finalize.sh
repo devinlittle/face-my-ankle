@@ -59,6 +59,7 @@ zstd -dc achilles-ui.tar.zst | tar -xpf - -C /
 rc-update add achilles-api default
 rc-update add achilles-ui default
 rc-update add agetty default
+rc-update add sshd default
 
 # Access Point stuff
 # _________________________________________________________
@@ -118,6 +119,12 @@ command="/usr/sbin/dnsmasq"
 command_args="--interface=ap0 --bind-interfaces --except-interface=lo \
 --dhcp-range=172.30.30.10,172.30.30.100,12h \
 --dhcp-option=3,172.30.30.1 --dhcp-option=6,172.30.30.1 \
+--address=/ankle.local/172.30.30.1 \
+--address=/config.ankle/172.30.30.1 \
+--address=/ankle.monitor/172.30.30.1 \
+--address=/monitor-THIS.ankle/172.30.30.1 \
+--address=/feet.feet/172.30.30.1 \
+--address=/ankle.feet/172.30.30.1 \
 --no-resolv --pid-file=/run/dnsmasq-ap.pid"
 command_background=true
 pidfile="/run/dnsmasq-ap.pid"

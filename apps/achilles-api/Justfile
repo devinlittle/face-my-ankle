@@ -5,27 +5,17 @@ default: help
 help:
   @just --list
 
-build target="bun":
-  #!/usr/bin/env bash
-  echo Building Achilles-API for: {{target}}
-  bun build \
-    --compile \
-    --minify-whitespace \
-    --minify-syntax \
-    --target {{target}} \
-    --outfile build/achilles-api \
-      src/index.ts
-
 package-tar:
   #!/usr/bin/env bash
-  rm -rf build
-  just build "bun-linux-arm64-musl"
+  cargo zigbuild --target aarch64-unknown-linux-musl --release -p achilles-api
 
   mkdir -p build/usr/bin
   mkdir -p build/etc/init.d
   mkdir -p build/etc/conf.d
 
-  mv build/achilles-api build/usr/bin
+  PROJECT_DIR="$(printf $(cd ../../ && pwd))"
+
+  cp -v $PROJECT_DIR/target/aarch64-unknown-linux-musl/release/achilles-api build/usr/bin
   cp res/achilles-api.initd build/etc/init.d/achilles-api
   cp res/achilles-api.confd build/etc/conf.d/achilles-api
   chmod 755 build/etc/init.d/achilles-api
@@ -35,4 +25,4 @@ package-tar:
   tar -cvf - -C build . | zstd -T0 -o achilles-api.tar.zst
 
 dev:
-  @bun run dev
+  @bun --bun run dev

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/ankle"]
+members = ["apps/achilles-api","apps/ankle"]
 
 [workspace.package]
 authors = ["Devin Little <devinlittlee@gmail.com>"]
@@ -9,4 +9,60 @@ edition = "2024"
 license = "AGPL-3.0-only"
 
 [workspace.dependencies]
+
+tokio = {version = "1.53.2", features = ["full"]}
+tokio-stream = "0.1.19"
+axum = {version = "0.8.9", features = ["macros"]}
+axum-extra = "0.12.6"
+axum-server = {version = "0.8.0", features = ["tls-rustls"]}
+hyper = "1.11.1"
+tower = "0.5.3"
+tower-http = { version = "0.7.1", features = ["cors"]}
+utoipa = {version = "6.0.0", features = ["axum_extras", "uuid", "chrono"]}
+utoipa-scalar = {version = "0.4.0", features = ["axum"]}
+
+serde = {version = "1.0.229", features = ["derive"]}
+serde_json = {version = "1.0.151"}
+
+sqlx = { version = "0.9.0", features = [
+  "runtime-tokio",
+  "tls-rustls-aws-lc-rs",
+  "sqlx-toml",
+  "sqlite",
+  "migrate",
+  "json",
+  "chrono",
+  "uuid"]}
+uuid = {version = "1.27.0", features = ["v4", "serde"]}
+jsonwebtoken = { version = "11.1.0", features = ["aws_lc_rs"] }
+argon2 = "0.6.0"
+chrono = { version = "0.4.45", features = ["serde"] }
+dashmap = "6.2.1"
+
+anyhow = "1.0.104"
+thiserror = "2.0.21"
+dotenvy = "0.15.7"
+
+directories = "6.0.0"
+
+tracing = "0.1.44"
+tracing-subscriber = {version = "0.3.23", features = ["env-filter", "json"] }
+tracing-appender = "0.2.5"
+
+prost = "0.14.4"
+tonic = "0.14.6"
+tonic-reflection = "0.14.6"
+tonic-prost = "0.14.6"
+tonic-prost-build = "0.14.6"
+
 rpi-pal = "0.22.3"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+strip = true
+debug = false
+debug-assertions = false
+overflow-checks = false

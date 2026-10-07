@@ -9,7 +9,6 @@
     "url": "https://git.home.devinlittle.net/devin/face-my-ankle.git"
   },
   "workspaces": [
-    "apps/achilles-api/",
     "apps/achilles-ui/"
   ],
   "scripts": {

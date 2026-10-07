@@ -5,15 +5,15 @@ default: help
 help:
   @just --list
 
-build target="bun":
+build:
   #!/usr/bin/env bash
-  echo Building Achilles UI for: {{target}}
+  echo Building Achilles UI
   bun --bun run build
 
 package-tar:
   #!/usr/bin/env bash
   rm -rf build
-  just build "bun-linux-arm64-musl"
+  just build
 
   mkdir -p build/usr/bin
   mkdir -p build/etc/init.d

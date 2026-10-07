@@ -6,4 +6,9 @@ command="/usr/bin/achilles-api"
 command_background="yes"
 pidfile="/run/${RC_SVCNAME}.pid"
 
+export HOST
 export PORT
+export DB_PATH
+export HASH_SECRET
+export JWT_SECRET
+export RUST_LOG

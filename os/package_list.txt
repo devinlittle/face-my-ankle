@@ -9,6 +9,7 @@ tzdata
 zstd
 agetty
 sudo
+openssh
 
 # Pi Kernel + firmware
 linux-rpi
