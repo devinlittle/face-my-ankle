@@ -79,7 +79,7 @@ command_background=true
 pidfile="/run/hostapd-ap.pid"
 
 depend() {
-    after modules
+    after modules wpa_supplicant networkmanager
 }
 
 start_pre() {
@@ -113,7 +113,7 @@ cat >/etc/init.d/dnsmasq-ap <<'EOF'
 #!/sbin/openrc-run
 
 name="dnsmasq (AP)"
-description="DHCP for the onboarding Access Point"
+description="DHCP for the onboarding/management Access Point"
 
 command="/usr/sbin/dnsmasq"
 command_args="--interface=ap0 --bind-interfaces --except-interface=lo \
@@ -137,5 +137,26 @@ EOF
 chmod +x /etc/init.d/dnsmasq-ap
 
 rc-update add dnsmasq-ap default
+
+rc-update add dbus default
+rc-update add udev sysinit
+
+#cat >/etc/iwd/main.conf <<'EOF'
+#[General]
+#Blacklist=ap0
+#EOF
+
+#rc-update add iwd default
+rc-update add wpa_supplicant default
+
+cat >/etc/NetworkManager/NetworkManager.conf <<'EOF'
+[device]
+wifi.backend=wpa_supplicant
+
+[keyfile]
+unmanaged-devices=interface-name:ap0
+EOF
+
+rc-update add networkmanager default
 
 rm -f /*.tar.*

@@ -27,3 +27,4 @@ networkmanager-cli
 dnsmasq
 hostapd
 wpa_supplicant
+eudev
