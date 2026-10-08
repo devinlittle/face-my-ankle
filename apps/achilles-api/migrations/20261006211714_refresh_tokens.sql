@@ -4,7 +4,7 @@ CREATE TABLE refresh_tokens (
     user_id TEXT NOT NULL,
     token_hash BLOB NOT NULL,
     expires_at TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TEXT NOT NULL,
     revoked_at TEXT,
     replaced_by_token TEXT,
     user_agent TEXT NOT NULL,

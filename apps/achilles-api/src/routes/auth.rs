@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use axum::{Json, extract::State, http::HeaderValue, response::IntoResponse};
 use axum_extra::{
     TypedHeader,
@@ -61,17 +63,26 @@ pub async fn register_handler(
     Json(req): Json<RegisterInput>,
 ) -> Result<&'static str, axum::http::StatusCode> {
     let password_hash: String = hash_password(req.password)?;
-    let user_id = Uuid::new_v4().as_u128().to_string();
+    let user_id = Uuid::new_v4().to_string();
 
     sqlx::query!(
-        "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
+        "INSERT INTO users (id, username, password_hash, created_at) VALUES ($1, $2, $3, $4) RETURNING id",
         user_id,
         req.username,
         password_hash,
+        Utc::now().to_string()
     )
     .fetch_one(&pool)
     .await
-    .map_err(|_| axum::http::StatusCode::CONFLICT)?;
+    .map_err(|err| {
+        error!(
+            error = %err,
+            user.id = %user_id,
+            "[Database Error]: username already in db"
+        );
+
+        axum::http::StatusCode::CONFLICT
+    })?;
 
     info!(
         user.username = %req.username,
@@ -104,7 +115,10 @@ pub async fn login_handler(
     .fetch_optional(&pool)
     .await
     .map_err(|err| {
-        error!(error = %err, "failed to look up user during login");
+        error!(
+            error = %err,
+            "[Database Error]: user lookup failure"
+        );
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
@@ -125,10 +139,10 @@ pub async fn login_handler(
             60 * 60 * 24 * 365 // this is a year - Devin Little
         );
 
-        let user_id = Uuid::from_u128(user.id.parse().map_err(|err| {
+        let user_id = Uuid::from_str(user.id.as_str()).map_err(|err| {
             error!(error = %err, "error converting String to Uuid");
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
-        })?);
+        })?;
 
         let session_id =
             insert_refresh_token(pool, user_id, &refresh_token, user_agent.to_string())
@@ -211,7 +225,10 @@ pub async fn refresh_handler(
     .fetch_optional(&pool)
     .await
     .map_err(|err| {
-        error!(error = %err, "Failed to get user_id and token_hash from refresh tokens");
+        error!(
+            error = %err,
+            "[Database Error]: Failed to get user_id and token_hash from refresh tokens"
+        );
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
@@ -231,10 +248,10 @@ pub async fn refresh_handler(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let user_id = Uuid::from_u128(user_id.parse().map_err(|err| {
+    let user_id = Uuid::from_str(user_id.as_str()).map_err(|err| {
         error!(error = %err, "error converting String to Uuid");
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
-    })?);
+    })?;
 
     let refresh_token = generate_random_string();
 
@@ -248,50 +265,58 @@ pub async fn refresh_handler(
     .map_err(|err| {
         error!(error = %err, "Failed to insert new refersh_token");
         StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    })?
+    .to_string();
 
     sqlx::query!(
         r#"
         UPDATE refresh_tokens
-        SET revoked_at = CURRENT_TIMESTAMP,
+        SET revoked_at = $3,
             replaced_by_token = $2
         WHERE token_hash = $1
         AND revoked_at IS NULL
-        AND expires_at > CURRENT_TIMESTAMP
+        AND expires_at > $3 
         "#,
         hash(cookie_refresh_token),
         new_refresh_id,
+        Utc::now().to_string()
     )
     .fetch_optional(&pool)
     .await
     .map_err(|err| {
-        error!(error = %err, "Failed to set old token as revoked");
+        error!(error = %err, "[Database Error]: Failed to set old token as revoked");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
     let user = sqlx::query!(
         "SELECT id, password_hash, username FROM users WHERE id = $1",
-        user_id
+        user_id.to_string()
     )
     .fetch_one(&pool)
     .await
     .map_err(|err| {
-        error!(error = %err, "Failed to grab user info during token refresh");
+        error!(error = %err, "[Database Error]: Failed to grab user info during token refresh");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    let sub = Uuid::from_u128(user.id.parse().map_err(|err| {
+    let sub = Uuid::from_str(user.id.as_str()).map_err(|err| {
         error!(error = %err, "error converting String to Uuid");
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
-    })?);
+    })?;
+
     let username = user.username.clone();
     let iat: DateTime<Utc> = Utc::now();
     let exp = iat + Duration::minutes(15);
 
+    let session_id_as_uuid = Uuid::from_str(new_refresh_id.as_str()).map_err(|err| {
+        error!(error = %err, "error converting String to Uuid");
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
     let access_token = generate_jwt(Claims {
         sub,
         username,
-        session_id: new_refresh_id,
+        session_id: session_id_as_uuid,
         iat,
         exp,
     })
@@ -363,7 +388,7 @@ pub async fn logout_handler(
     .fetch_one(&pool)
     .await
     .map_err(|err| {
-        error!(error = %err, "failed to delete refresh_token");
+        error!(error = %err, "[Database Error]: failed to delete refresh_token");
         StatusCode::INTERNAL_SERVER_ERROR
     })?
     .user_id;
@@ -376,7 +401,7 @@ pub async fn logout_handler(
     headers.insert(
         SET_COOKIE,
         HeaderValue::from_str(empty_refresh_cookie).map_err(|err| {
-            error!(error = %err, "failed to adttach new refresh token to headers");
+            error!(error = %err, "failed to attach new refresh token to headers");
             StatusCode::INTERNAL_SERVER_ERROR
         })?,
     );
@@ -415,12 +440,15 @@ pub async fn insert_refresh_token(
     let expires_at = Utc::now() + Duration::days(REFRESH_EXPIRE_DATE);
     let expires_at = expires_at.to_string();
 
-    let user_id = user_id.as_u128().to_string();
+    let refresh_token_id = Uuid::new_v4().to_string();
+    let user_id = user_id.to_string();
 
     let query = sqlx::query!(
-        r#"INSERT INTO refresh_tokens (user_id, token_hash, expires_at, user_agent) VALUES ($1, $2, $3, $4) RETURNING id"#,
+        r#"INSERT INTO refresh_tokens (id, user_id, token_hash, created_at, expires_at, user_agent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"#,
+        refresh_token_id,
         user_id,
         hash(refresh_token),
+        Utc::now().to_string(),
         expires_at,
         user_agent
     )
@@ -430,19 +458,20 @@ pub async fn insert_refresh_token(
         error!(
             error = %err,
             user.id = %user_id,
-            "[Database failure]: Failed to write refresh token to database"
+            "[Database Error]: Failed to write refresh token to database"
         );
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
     let Some(token_id_string) = query.id else {
+        error!("error converting String to Uuid");
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    let token_id = Uuid::from_u128(token_id_string.parse().map_err(|err| {
+    let token_id = Uuid::from_str(token_id_string.as_str()).map_err(|err| {
         error!(error = %err, "error converting String to Uuid");
         axum::http::StatusCode::INTERNAL_SERVER_ERROR
-    })?);
+    })?;
 
     Ok(token_id)
 }

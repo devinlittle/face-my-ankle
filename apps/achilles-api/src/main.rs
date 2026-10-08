@@ -1,6 +1,7 @@
+use anyhow::Result;
 use axum::Router;
 use hyper::header::{ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE};
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use std::{net::SocketAddr, time::Duration};
 use tokio::signal;
 use tower_http::cors::CorsLayer;
@@ -12,7 +13,7 @@ mod routes;
 mod utils;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let env_filter = EnvFilter::from_default_env();
 
     let stdout_layer = tracing_subscriber::fmt::layer().with_ansi(true).compact();
@@ -53,22 +54,19 @@ async fn main() {
         .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCESS_CONTROL_ALLOW_ORIGIN])
         .allow_credentials(true);
 
-    // TODO: DB STUFF HERE
-
-    let db_path = if let Some(path) = &SECRETS.db_path {
-        path.clone()
-    } else {
-        "./achilles.db".to_string()
-    };
-
-    // TODO : evaluate this line of code
-    //let db_path = format!("sqlite:{}", db_path);
-
     let options = SqliteConnectOptions::new()
-        .filename(db_path.clone())
-        .create_if_missing(true);
+        .filename(&SECRETS.db_path)
+        .create_if_missing(true)
+        .journal_mode(SqliteJournalMode::Wal)
+        .synchronous(SqliteSynchronous::Normal)
+        .busy_timeout(Duration::from_secs(5));
 
-    let pool = SqlitePool::connect_with(options).await.unwrap();
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect_with(options)
+        .await?;
+
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new().merge(routes::create_routes(pool).layer(cors));
 
@@ -84,6 +82,8 @@ async fn main() {
         .with_graceful_shutdown(shutdown_signal_handler)
         .await
         .unwrap();
+
+    Ok(())
 }
 
 async fn shutdown_signal(handle: axum_server::Handle<SocketAddr>) {
