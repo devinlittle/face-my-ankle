@@ -5,6 +5,13 @@ default: help
 help:
   @just --list
 
+create-db:
+
+prepare:
+
+migrate:
+
+
 package-tar:
   #!/usr/bin/env bash
   cargo zigbuild --target aarch64-unknown-linux-musl --release -p achilles-api

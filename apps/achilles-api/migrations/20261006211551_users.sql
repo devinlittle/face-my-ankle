@@ -1,7 +1,7 @@
 -- Add migration script here
-CREATE TABLE users (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,      -- Unique user identifier
-    username VARCHAR(50) NOT NULL UNIQUE,               -- Username for login
-    password_hash TEXT NOT NULL,                        -- Hashed password
-    created_at TIMESTAMPTZ DEFAULT NOW(),               -- Account creation timestamp
+ CREATE TABLE users (
+    id TEXT PRIMARY KEY NOT NULL,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1611338810d1c3f83aa0404fd5b7294ac2df302b7fdfffdb7287678a1cc9e9db"
+}

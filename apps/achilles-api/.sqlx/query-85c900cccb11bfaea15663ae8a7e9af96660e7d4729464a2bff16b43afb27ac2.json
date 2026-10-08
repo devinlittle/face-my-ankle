@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, password_hash, username FROM users WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "password_hash",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "password_hash"
+          }
+        }
+      },
+      {
+        "name": "username",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "username"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "85c900cccb11bfaea15663ae8a7e9af96660e7d4729464a2bff16b43afb27ac2"
+}

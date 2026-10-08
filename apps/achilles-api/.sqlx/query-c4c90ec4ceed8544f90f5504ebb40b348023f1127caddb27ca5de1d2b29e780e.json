@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO refresh_tokens (user_id, token_hash, expires_at, user_agent) VALUES ($1, $2, $3, $4) RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "refresh_tokens",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "c4c90ec4ceed8544f90f5504ebb40b348023f1127caddb27ca5de1d2b29e780e"
+}

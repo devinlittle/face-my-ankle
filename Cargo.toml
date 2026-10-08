@@ -13,7 +13,7 @@ license = "AGPL-3.0-only"
 tokio = {version = "1.53.2", features = ["full"]}
 tokio-stream = "0.1.19"
 axum = {version = "0.8.9", features = ["macros"]}
-axum-extra = "0.12.6"
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = {version = "0.8.0", features = ["tls-rustls"]}
 hyper = "1.11.1"
 tower = "0.5.3"
@@ -38,6 +38,10 @@ jsonwebtoken = { version = "11.1.0", features = ["aws_lc_rs"] }
 argon2 = "0.6.0"
 chrono = { version = "0.4.45", features = ["serde"] }
 dashmap = "6.2.1"
+base64 = "0.23.1"
+rand = "0.10.3"
+sha2 = "0.11.0"
+constant_time_eq = "0.6.1"
 
 anyhow = "1.0.104"
 thiserror = "2.0.21"
@@ -46,7 +50,7 @@ dotenvy = "0.15.7"
 directories = "6.0.0"
 
 tracing = "0.1.44"
-tracing-subscriber = {version = "0.3.23", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 tracing-appender = "0.2.5"
 
 prost = "0.14.4"
@@ -55,6 +59,7 @@ tonic-reflection = "0.14.6"
 tonic-prost = "0.14.6"
 tonic-prost-build = "0.14.6"
 
+zbus = { version = "5.19.0", features = ["tokio"], default-features = false }
 rpi-pal = "0.22.3"
 
 [profile.release]

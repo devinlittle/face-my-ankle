@@ -1,4 +1,7 @@
-use axum::{Json, Router, routing::get};
+use axum::{
+    Json, Router,
+    routing::{get, post},
+};
 use sqlx::SqlitePool;
 use utoipa::{
     OpenApi,
@@ -6,12 +9,24 @@ use utoipa::{
 };
 use utoipa_scalar::{Scalar, Servable};
 
+mod auth;
+mod net;
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
         crate::routes::health,
+        crate::routes::auth::register_handler,
+        crate::routes::auth::login_handler,
+        crate::routes::auth::refresh_handler,
+        crate::routes::auth::logout_handler,
     ),
-    components(schemas()),
+    components(schemas(
+        crate::routes::auth::RegisterInput,
+        crate::routes::auth::LoginInput,
+        crate::routes::auth::LoginOutput,
+        crate::routes::auth::Claims,
+    )),
     modifiers(&JwtBearer, &CookieAuth),
     tags()
 )]
@@ -69,7 +84,12 @@ pub fn create_routes(pool: SqlitePool) -> Router {
                 move || async { Json(json_spec) }
             }),
         )
-        .route("/health", get(health));
+        .route("/health", get(health))
+        // Auth Routes
+        .route("/auth/register", post(auth::register_handler))
+        .route("/auth/login", post(auth::login_handler))
+        .route("/auth/refresh", post(auth::refresh_handler))
+        .route("/auth/logout", post(auth::logout_handler));
 
     Router::new()
         .merge(routes_without_middleware)

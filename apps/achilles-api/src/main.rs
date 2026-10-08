@@ -37,6 +37,8 @@ async fn main() {
         "https://monitor_this.ankle:80".parse().unwrap(),
         "http://feet.feet:80".parse().unwrap(),
         "https://feet.feet:80".parse().unwrap(),
+        "http://ankle.feet:80".parse().unwrap(),
+        "https://ankle.feet:80".parse().unwrap(),
     ];
 
     let cors = CorsLayer::new()
