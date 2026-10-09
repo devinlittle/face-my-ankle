@@ -2,7 +2,7 @@ use anyhow::Result;
 use axum::Router;
 use hyper::header::{ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
-use std::{net::SocketAddr, time::Duration};
+use std::{net::SocketAddr, str::FromStr, time::Duration};
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing::info;
@@ -54,8 +54,8 @@ async fn main() -> Result<()> {
         .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCESS_CONTROL_ALLOW_ORIGIN])
         .allow_credentials(true);
 
-    let options = SqliteConnectOptions::new()
-        .filename(&SECRETS.db_path)
+    let options = SqliteConnectOptions::from_str(&SECRETS.db_path)
+        .unwrap()
         .create_if_missing(true)
         .journal_mode(SqliteJournalMode::Wal)
         .synchronous(SqliteSynchronous::Normal)
@@ -69,12 +69,10 @@ async fn main() -> Result<()> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new().merge(routes::create_routes(pool).layer(cors));
-
-    let host_on = format!("{}:{}", SECRETS.host, SECRETS.port);
-
     let handle = axum_server::Handle::new();
     let shutdown_signal_handler = shutdown_signal(handle);
 
+    let host_on = format!("{}:{}", SECRETS.host, SECRETS.port);
     let listener_tokio = tokio::net::TcpListener::bind(host_on).await.unwrap();
 
     info!("Listening on {}", listener_tokio.local_addr().unwrap());

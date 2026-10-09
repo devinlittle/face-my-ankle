@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3) RETURNING id",
+  "query": "INSERT INTO users (id, username, password_hash, created_at) VALUES ($1, $2, $3, $4) RETURNING id",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 4
     },
     "nullable": [
       false
     ]
   },
-  "hash": "1611338810d1c3f83aa0404fd5b7294ac2df302b7fdfffdb7287678a1cc9e9db"
+  "hash": "40712e0661b76fea4318cc5c28f47f4a9f1e495e12b706d57787ca841dd56aae"
 }
