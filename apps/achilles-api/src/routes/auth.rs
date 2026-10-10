@@ -11,42 +11,18 @@ use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tracing::{error, info, warn};
-use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::utils::{
-    hash::{hash, hash_password, verify_password},
-    rng::generate_random_string,
-    secrets::SECRETS,
+use crate::{
+    structs::{Claims, LoginInput, LoginOutput, RegisterInput},
+    utils::{
+        hash::{hash, hash_password, verify_password},
+        rng::generate_random_string,
+        secrets::SECRETS,
+    },
 };
 
 const REFRESH_EXPIRE_DATE: i64 = 365;
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct RegisterInput {
-    #[schema(example = "user")]
-    pub username: String,
-    #[schema(example = "password")]
-    pub password: String,
-}
-
-pub type LoginInput = RegisterInput;
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct LoginOutput {
-    pub access_token: String,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, ToSchema)]
-pub struct Claims {
-    pub sub: Uuid,
-    pub username: String,
-    pub session_id: Uuid,
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub iat: DateTime<Utc>,
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub exp: DateTime<Utc>,
-}
 
 #[utoipa::path(
     post,

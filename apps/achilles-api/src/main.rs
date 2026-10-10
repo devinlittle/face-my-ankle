@@ -9,8 +9,10 @@ use tracing::info;
 use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
 use utils::secrets::SECRETS;
 
+mod middleware;
 mod nm;
 mod routes;
+mod structs;
 mod utils;
 
 #[tokio::main]

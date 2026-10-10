@@ -11,6 +11,7 @@ use utoipa_scalar::{Scalar, Servable};
 
 mod auth;
 mod net;
+mod ws;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -22,10 +23,11 @@ mod net;
         crate::routes::auth::logout_handler,
     ),
     components(schemas(
-        crate::routes::auth::RegisterInput,
-        crate::routes::auth::LoginInput,
-        crate::routes::auth::LoginOutput,
-        crate::routes::auth::Claims,
+        crate::structs::RegisterInput,
+        crate::structs::LoginInput,
+        crate::structs::LoginOutput,
+        crate::structs::Claims,
+        crate::structs::AuthenticatedUser,
     )),
     modifiers(&JwtBearer, &CookieAuth),
     tags()
@@ -73,6 +75,9 @@ pub async fn health() -> Result<(), axum::http::StatusCode> {
     Ok(())
 }
 
+#[derive(Clone, Debug)]
+struct AppState {}
+
 pub fn create_routes(pool: SqlitePool) -> Router {
     let openapi = DaApiDoc::openapi();
 
@@ -91,8 +96,13 @@ pub fn create_routes(pool: SqlitePool) -> Router {
         .route("/auth/refresh", post(auth::refresh_handler))
         .route("/auth/logout", post(auth::logout_handler));
 
+    let routes_with_middleware = Router::new()
+        .route("/health_MIDDLE", get(health))
+        .layer(axum::middleware::from_fn(crate::middleware::jwt::jwt_auth));
+
     Router::new()
         .merge(routes_without_middleware)
+        .merge(routes_with_middleware)
         .merge(Scalar::with_url("/api-docs/scalar", openapi))
         .with_state(pool)
 }
