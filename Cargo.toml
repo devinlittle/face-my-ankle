@@ -1,6 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["apps/achilles-api","apps/ankle"]
+members = [
+  "apps/achilles-api",
+  "apps/ankle"
+]
 
 [workspace.package]
 authors = ["Devin Little <devinlittlee@gmail.com>"]
@@ -12,6 +15,7 @@ license = "AGPL-3.0-only"
 
 tokio = {version = "1.53.2", features = ["full"]}
 tokio-stream = "0.1.19"
+futures-util = "0.3.34"
 axum = {version = "0.8.9", features = ["macros"]}
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 axum-server = {version = "0.8.0", features = ["tls-rustls"]}
