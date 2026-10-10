@@ -10,6 +10,7 @@ zstd
 agetty
 sudo
 openssh
+libcap-setcap
 
 # Pi Kernel + firmware
 linux-rpi

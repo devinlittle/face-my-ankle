@@ -56,6 +56,17 @@ zstd -dc achilles-api.tar.zst | tar -xpf - -C /
 zstd -dc achilles-ui.tar.zst | tar -xpf - -C /
 #zstd -dc ankle.tar.zst | tar -xpf - -C /
 
+sudo setcap 'cap_net_bind_service=+ep' /usr/bin/achilles-ui
+cat >/etc/polkit-1/rules.d/50-networkmanager.rules <<'EOF'
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") === 0) {
+        if (subject.user === "nived") {
+            return polkit.Result.YES;
+        }
+    }
+});
+EOF
+
 rc-update add achilles-api default
 rc-update add achilles-ui default
 rc-update add agetty default
