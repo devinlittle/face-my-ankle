@@ -4,6 +4,7 @@ pub struct Secrets {
     pub host: String,
     pub port: String,
     pub db_path: String,
+    pub log_dir: String,
     pub hash_secret: String,
     pub jwt_secret: String,
 }
@@ -14,6 +15,7 @@ pub static SECRETS: LazyLock<Secrets> = LazyLock::new(|| {
         host: dotenvy::var("HOST").unwrap_or("::".to_string()),
         port: dotenvy::var("PORT").unwrap_or("3000".to_string()),
         db_path: dotenvy::var("DB_PATH").unwrap_or("./achilles.db".to_string()),
+        log_dir: dotenvy::var("LOG_DIR").unwrap_or("./".to_string()),
         hash_secret: dotenvy::var("HASH_SECRET").expect("HASH_SECRET must be set in .env file"),
         jwt_secret: dotenvy::var("JWT_SECRET").expect("JWT_SECRET env var not found"),
     }

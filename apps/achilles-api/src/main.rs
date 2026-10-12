@@ -20,10 +20,18 @@ async fn main() -> Result<()> {
     let env_filter = EnvFilter::from_default_env();
 
     let stdout_layer = tracing_subscriber::fmt::layer().with_ansi(true).compact();
+    std::fs::create_dir_all(&SECRETS.log_dir)?;
+    let file_appender = tracing_appender::rolling::daily(&SECRETS.log_dir, "achilles-api.log");
+
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    let file_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_writer(non_blocking);
 
     Registry::default()
         .with(env_filter)
         .with(stdout_layer)
+        .with(file_layer)
         .init();
 
     let origins = [
