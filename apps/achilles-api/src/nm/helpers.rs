@@ -1,16 +1,23 @@
-use std::{any, collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 
-use anyhow::{Error, Result};
-use futures_util::StreamExt;
+use anyhow::Result;
 use zbus::{
     Connection,
     zvariant::{ObjectPath, OwnedObjectPath, Value},
 };
 
-use crate::nm::{
-    access_point_proxy::AccessPointProxy, active_proxy::ActiveProxy, device_proxy::DeviceProxy,
-    network_manager_proxy::NetworkManagerProxy, settings_connection_proxy::ConnectionProxy,
-    settings_proxy::SettingsProxy, wireless_proxy::WirelessProxy,
+use crate::{
+    nm::{
+        access_point_proxy::AccessPointProxy,
+        active_proxy::ActiveProxy,
+        device_proxy::DeviceProxy,
+        helpers::WifiConnectionError::{ConnectionActivationFailed, DBusError, DoesNotExist},
+        network_manager_proxy::NetworkManagerProxy,
+        settings_connection_proxy::ConnectionProxy,
+        settings_proxy::SettingsProxy,
+        wireless_proxy::WirelessProxy,
+    },
+    structs::net::ApInfo,
 };
 
 pub async fn active_proxy<'a>(
@@ -52,16 +59,6 @@ pub async fn access_point_proxy<'a>(
     AccessPointProxy::builder(conn).path(dev)?.build().await
 }
 
-#[derive(Debug, Clone)]
-pub struct ApInfo {
-    pub path: OwnedObjectPath,
-    pub ssid: String,
-    pub strength: u8,
-    pub frequency: u32,
-    pub bssid: String,
-    pub secured: bool,
-}
-
 pub async fn find_wifi_device(conn: &Connection) -> Result<OwnedObjectPath, zbus::Error> {
     let nm = NetworkManagerProxy::new(conn).await?;
     for path in nm.get_devices().await? {
@@ -73,7 +70,7 @@ pub async fn find_wifi_device(conn: &Connection) -> Result<OwnedObjectPath, zbus
     Err(zbus::Error::Failure("no WiFi device found".into()))
 }
 
-async fn read_ap(conn: &Connection, path: OwnedObjectPath) -> Result<ApInfo> {
+pub async fn read_ap(conn: &Connection, path: OwnedObjectPath) -> Result<ApInfo> {
     let ap = access_point_proxy(conn, &path).await?;
     let flags = ap.flags().await?;
     let wpa = ap.wpa_flags().await?;
@@ -123,35 +120,48 @@ async fn find_saved_connection(conn: &Connection, ssid: &str) -> Result<Option<O
     Ok(None)
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum WifiConnectionError {
+    #[error("SSID provided does not exist")]
+    DoesNotExist,
+    #[error("Incorrect Password")]
+    PasswordWrong,
+    #[error("Network Activation failed")]
+    ConnectionActivationFailed,
+    #[error("Internal D-Bus Error")]
+    DBusError,
+}
+
 pub async fn connect(
     conn: &Connection,
     dev: &OwnedObjectPath,
-    ssid: &str,
-    password: Option<&str>,
-) -> Result<OwnedObjectPath> {
-    let nm = nm_proxy(conn).await?;
-    let none = ObjectPath::try_from("/")?;
+    ssid: String,
+    password: Option<String>,
+) -> Result<OwnedObjectPath, WifiConnectionError> {
+    let nm = nm_proxy(conn).await.map_err(|_| DBusError)?;
+    let none = ObjectPath::try_from("/").map_err(|_| DoesNotExist)?;
 
-    if let Some(saved) = find_saved_connection(conn, ssid).await? {
+    if let Some(saved) = find_saved_connection(conn, ssid.as_str())
+        .await
+        .map_err(|_| DoesNotExist)?
+    {
         println!("{:?}", saved.clone().into_inner());
         return nm
             .activate_connection(&saved, dev, &none)
             .await
-            .map_err(|e| {
-                eprintln!("{:?}", e);
-                anyhow::anyhow!("failed to activate connection")
-            });
+            .map_err(|_| ConnectionActivationFailed);
     }
 
     let ap = list_networks(conn, dev)
-        .await?
+        .await
+        .map_err(|_| DoesNotExist)?
         .into_iter()
         .find(|a| a.ssid == ssid)
-        .ok_or_else(|| zbus::Error::Failure(format!("SSID '{ssid}' not in scan results")))?;
+        .ok_or(DoesNotExist)?;
 
     let mut s_conn: HashMap<&str, &Value> = HashMap::new();
     let wireless_type: Value = "802-11-wireless".into();
-    let ssid_id: Value = ssid.into();
+    let ssid_id: Value = ssid.clone().into();
     s_conn.insert("type", &wireless_type);
     s_conn.insert("id", &ssid_id);
 
@@ -176,7 +186,8 @@ pub async fn connect(
 
     let (_profile, active) = nm
         .add_and_activate_connection(settings, dev, &ap.path)
-        .await?;
+        .await
+        .map_err(|_| ConnectionActivationFailed)?;
     Ok(active)
 }
 

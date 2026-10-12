@@ -31,6 +31,22 @@ echo "AnkleMonitor" >/etc/hostname
 echo "127.0.0.1 localhost AnkleMonitor" >>/etc/hosts
 rc-update add hostname boot
 
+cat >/etc/motd <<'EOF'
+This is my Ankle Monitor
+
+If you are here I assume you know what you are doing BUT...
+
+default login is:
+-----------------
+    nived:pass
+-----------------
+
+Check out https://github.com/devinlittle/face-my-ankle for more information
+
+(psst, to mute this, delete the /etc/motd file)
+
+EOF
+
 USERNAME="nived"
 PASSWORD="pass"
 SHELL_PATH="/bin/ash"
@@ -56,7 +72,8 @@ zstd -dc achilles-api.tar.zst | tar -xpf - -C /
 zstd -dc achilles-ui.tar.zst | tar -xpf - -C /
 #zstd -dc ankle.tar.zst | tar -xpf - -C /
 
-sudo setcap 'cap_net_bind_service=+ep' /usr/bin/achilles-ui
+setcap 'cap_net_bind_service=+ep' /usr/bin/achilles-ui
+mkdir -p /etc/polkit-1/rules.d/
 cat >/etc/polkit-1/rules.d/50-networkmanager.rules <<'EOF'
 polkit.addRule(function(action, subject) {
     if (action.id.indexOf("org.freedesktop.NetworkManager.") === 0) {
@@ -69,7 +86,7 @@ EOF
 
 rc-update add achilles-api default
 rc-update add achilles-ui default
-rc-update add agetty default
+rc-update add polkit
 rc-update add sshd default
 
 # Access Point stuff
@@ -153,12 +170,6 @@ rc-update add dnsmasq-ap default
 rc-update add dbus default
 rc-update add udev sysinit
 
-#cat >/etc/iwd/main.conf <<'EOF'
-#[General]
-#Blacklist=ap0
-#EOF
-
-#rc-update add iwd default
 rc-update add wpa_supplicant default
 
 cat >/etc/NetworkManager/NetworkManager.conf <<'EOF'

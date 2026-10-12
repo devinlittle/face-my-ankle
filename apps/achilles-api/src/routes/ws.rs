@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
 };
 use hyper::StatusCode;
+use std::sync::Arc;
 
 use crate::{
     routes::AppState,
@@ -23,11 +24,12 @@ use crate::{
     path = "/ws",
     responses(
         (status = 101, description = "swithcing to websockets"),
-    )
+    ),
+    tag = "ws"
 )]
 pub async fn ws(
     ws: WebSocketUpgrade,
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     Ok(ws.on_upgrade(move |mut socket| async move {
         let Some(Ok(Message::Text(msg))) = socket.recv().await else {
@@ -68,6 +70,7 @@ pub async fn ws(
                                 Subscribe { topics } => {
                                     for topic in topics {
                                         if subs.subscribe_if_new(&topic) {
+                                            // TODO: encode `msg` into its own JSON object
                                             let msg = format!("Subscribed to {:?}", topic);
                                             let _ = socket.send(msg.into()).await;
                                         }
@@ -76,7 +79,8 @@ pub async fn ws(
                                 Unsubscribe{ topics } => {
                                     for topic in topics {
                                         if subs.unsubscribe_if_new(&topic) {
-                                            let msg = format!("Subscribed to {:?}", topic);
+                                            // TODO: encode `msg` into its own JSON object
+                                            let msg = format!("Unsubbscribed from {:?}", topic);
                                             let _ = socket.send(msg.into()).await;
                                         }
                                     }

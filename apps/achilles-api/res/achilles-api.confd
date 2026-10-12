@@ -1,6 +1,7 @@
 HOST=0.0.0.0
 PORT=3000
 DB_PATH=/opt/achilles.db
+LOG_DIR=/var/log/achilles
 HASH_SECRET=abc123XYZ345
 JWT_SECRET=abc123XYZ345
 RUST_LOG=info

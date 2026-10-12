@@ -10,6 +10,8 @@ zstd
 agetty
 sudo
 openssh
+dbus
+polkit
 libcap-setcap
 
 # Pi Kernel + firmware

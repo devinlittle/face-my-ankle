@@ -1,9 +1,13 @@
 use axum::{
     Json, Router,
-    routing::{get, post},
+    routing::{delete, get, patch, post},
 };
 use sqlx::SqlitePool;
-use tokio::sync::{broadcast, watch};
+use std::{sync::Arc, time::Duration};
+use tokio::{
+    sync::{broadcast, watch},
+    time::sleep,
+};
 use utoipa::{
     OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
@@ -28,20 +32,35 @@ mod ws;
         crate::routes::auth::login_handler,
         crate::routes::auth::refresh_handler,
         crate::routes::auth::logout_handler,
+        crate::routes::ws::ws,
+        crate::routes::net::set_wifi_status,
+        crate::routes::net::scan_wifi,
+        crate::routes::net::get_networks,
+        crate::routes::net::connect_to_network,
+        crate::routes::net::disconnect_from_network,
     ),
-    components(schemas(
-        crate::structs::auth::RegisterInput,
-        crate::structs::auth::LoginInput,
-        crate::structs::auth::LoginOutput,
-        crate::structs::Claims,
-        crate::structs::AuthenticatedUser,
-        crate::structs::ws::Bootstrap,
-        crate::structs::ws::SubscriptionTopic,
-        crate::structs::ws::SubscriptionEvent,
-        crate::structs::net::NetStatistics,
-    )),
+    components(
+        schemas(
+            crate::structs::auth::RegisterInput,
+            crate::structs::auth::LoginInput,
+            crate::structs::auth::LoginOutput,
+            crate::structs::Claims,
+            crate::structs::AuthenticatedUser,
+            crate::structs::ws::Bootstrap,
+            crate::structs::ws::SubscriptionTopic,
+            crate::structs::ws::SubscriptionEvent,
+            crate::structs::net::NetStatistics,
+            crate::structs::net::SetWifiStatusInput,
+            crate::structs::net::AccessPoint,
+            crate::structs::net::WifiConnectInput,
+        )
+    ),
     modifiers(&JwtBearer, &CookieAuth),
-    tags()
+    tags(
+        (name = "auth", description = "Authentication endpoints"),
+        (name = "net", description = "Endpoints relating to modifying or access net stuff"),
+        (name = "ws", description = "The Websocket"),
+    )
 )]
 pub struct DaApiDoc;
 
@@ -98,24 +117,35 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         .await
         .expect("Failed to setup D-Bus System Conntection");
 
-    // TODO: maybe make the interface to find based on an env var?
-    let wlan0 = NetworkManagerProxy::new(&connection)
+    let nm = NetworkManagerProxy::new(&connection)
         .await
-        .expect("Failed to setup D-Bus NM Device Conntection")
-        .get_device_by_ip_iface("wlan0")
-        .await
-        .expect("can't find the wlan0 interface");
+        .expect("Failed to setup D-Bus NM Device Conntection");
+
+    let wlan0 = tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            // TODO: maybe make the interface to find based on an env var?
+            match nm.get_device_by_ip_iface("wlan0").await {
+                Ok(device) => break device,
+                Err(err) => {
+                    tracing::debug!("Waiting for wlan0 to appear in NetworkManager: {:?}", err);
+                    sleep(Duration::from_millis(100)).await;
+                }
+            }
+        }
+    })
+    .await
+    .expect("Timed out waiting for wlan0 to appear in NetworkManager");
 
     let zbus_con = (connection, wlan0);
-    // Run init things for zbus net?
 
     let interface_stats = watch::Sender::<NetStatistics>::new(NetStatistics::default());
+    //    let access_point_broadcast = broadcast::Sender::<NetStatistics>::new(NetStatistics::default());
 
-    let app_state = AppState {
+    let app_state = Arc::new(AppState {
         pool: pool.clone(),
         zbus_con: zbus_con.clone(),
         interface_stats,
-    };
+    });
 
     let _ = network_task_catalyst(&zbus_con, app_state.clone()).await;
 
@@ -139,11 +169,19 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
 
     let singular_websocket_roouter = Router::new()
         .route("/ws", get(ws::ws))
-        .with_state(app_state.clone());
+        .with_state(Arc::clone(&app_state));
 
-    let routes_with_middleware = Router::new().route("/health_MIDDLE", get(health)).layer(
-        axum::middleware::from_fn_with_state(app_state.clone(), crate::middleware::jwt::jwt_auth),
-    );
+    let routes_with_middleware = Router::new()
+        .route("/net/wifi/enabled", patch(net::set_wifi_status))
+        .route("/net/wifi/scan", post(net::scan_wifi))
+        .route("/net/wifi/networks", get(net::get_networks))
+        .route("/net/wifi/connect", post(net::connect_to_network))
+        .route("/net/wifi/disconnect", delete(net::disconnect_from_network))
+        .layer(axum::middleware::from_fn_with_state(
+            Arc::clone(&app_state),
+            crate::middleware::jwt::jwt_auth,
+        ))
+        .with_state(Arc::clone(&app_state));
 
     Router::new()
         .merge(routes_without_middleware)

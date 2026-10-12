@@ -6,15 +6,18 @@ use futures_util::StreamExt;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
+    sync::Arc,
     time::Duration,
 };
 use tokio::{
     task::JoinHandle,
     time::{Instant, interval},
 };
+use tracing::info;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
+    nm::helpers::{read_ap, wireless_proxy},
     routes::AppState,
     structs::net::{NetStatistics, ZbusCon},
 };
@@ -23,21 +26,26 @@ use crate::{
 pub struct NMTasks {
     pub statistics_task: Option<JoinHandle<()>>,
     // device_status_task: JoinHandle<()>,
-    // access_point_task: JoinHandle<()>,
+    access_point_task: Option<JoinHandle<()>>,
 }
 
 /// Spawns all tasks for tokio sync and broacasts
-pub async fn network_task_catalyst(zbus_con: &ZbusCon, app_state: AppState) -> Result<NMTasks> {
+pub async fn network_task_catalyst(
+    zbus_con: &ZbusCon,
+    app_state: Arc<AppState>,
+) -> Result<NMTasks> {
     let (conn, dev) = zbus_con.clone();
 
-    let statistics_task = spawn_net_stats_task_worker(app_state.clone()).await?;
+    let statistics_task = spawn_net_stats_task_worker(Arc::clone(&app_state)).await?;
+    let access_point_task = spawn_access_point_worker(Arc::clone(&app_state)).await?;
 
     Ok(NMTasks {
         statistics_task: Some(statistics_task),
+        access_point_task: Some(access_point_task),
     })
 }
 
-pub async fn spawn_net_stats_task_worker(app_state: AppState) -> Result<JoinHandle<()>> {
+pub async fn spawn_net_stats_task_worker(app_state: Arc<AppState>) -> Result<JoinHandle<()>> {
     let handle = tokio::spawn(async move {
         let iface = "wlan0";
 
@@ -146,12 +154,23 @@ pub async fn spawn_device_status_worker(
     Ok(handle)
 }
 
-pub async fn spawn_access_point_worker(
-    conn: &Connection,
-    dev: &OwnedObjectPath,
-    app_state: AppState,
-) -> Result<JoinHandle<()>> {
-    let handle = tokio::spawn(async move {});
+pub async fn spawn_access_point_worker(app_state: Arc<AppState>) -> Result<JoinHandle<()>> {
+    let wireless_proxy = wireless_proxy(&app_state.zbus_con.0, &app_state.zbus_con.1).await?;
+    let mut access_point_added = wireless_proxy.receive_access_point_added().await?;
+    let mut access_point_removed = wireless_proxy.receive_access_point_removed().await?;
+
+    let handle = tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                ap = access_point_added.next() => {
+                    info!("{:?}", ap);
+                }
+                ap = access_point_removed.next() => {
+                    info!("{:?}", ap);
+                }
+            }
+        }
+    });
 
     Ok(handle)
 }

@@ -33,7 +33,7 @@ const REFRESH_EXPIRE_DATE: i64 = 365;
         (status = 200, description = "Registers User!", body = String),
         (status = 409, description = "User exists")
     ),
-    tag = "user_auth"
+    tag = "auth"
 )]
 pub async fn register_handler(
     State(pool): State<SqlitePool>,
@@ -78,7 +78,7 @@ pub async fn register_handler(
         (status = 401, description = "Credentials Incorrect"),
         (status = 500, description = "Interal Server Error")
     ),
-    tag = "user_auth"
+    tag = "auth"
 )]
 pub async fn login_handler(
     State(pool): State<SqlitePool>,
@@ -179,7 +179,7 @@ pub async fn login_handler(
         (status = 401, description = "cookie messed tf up"),
         (status = 500, description = "Interal Server Error")
     ),
-    tag = "user_auth"
+    tag = "auth"
 )]
 pub async fn refresh_handler(
     State(pool): State<SqlitePool>,
@@ -341,7 +341,7 @@ pub async fn refresh_handler(
         (status = 401, description = "the refresh_token cookie the user send is messed tf up"),
         (status = 500, description = "Interal Server Error")
     ),
-    tag = "user_auth"
+    tag = "auth"
 )]
 pub async fn logout_handler(
     State(pool): State<SqlitePool>,
