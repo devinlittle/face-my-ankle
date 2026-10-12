@@ -126,8 +126,8 @@ pub trait NetworkManager {
     fn sleep(&self, sleep: bool) -> zbus::Result<()>;
 
     /// state method
-    //#[zbus(name = "state")]
-    //fn state(&self) -> zbus::Result<u32>;
+    #[zbus(property, name = "state")]
+    fn state_use_this_one(&self) -> zbus::Result<u32>;
 
     /// CheckPermissions signal
     #[zbus(signal)]
@@ -142,8 +142,8 @@ pub trait NetworkManager {
     fn device_removed(&self, device_path: zbus::zvariant::ObjectPath<'_>) -> zbus::Result<()>;
 
     /// StateChanged signal
-    //#[zbus(signal)]
-    //fn state_changed(&self, state: u32) -> zbus::Result<()>;
+    #[zbus(signal)]
+    fn state_changed(&self, state: u32) -> zbus::Result<()>;
 
     /// ActivatingConnection property
     #[zbus(property)]
@@ -221,10 +221,6 @@ pub trait NetworkManager {
     /// Startup property
     #[zbus(property)]
     fn startup(&self) -> zbus::Result<bool>;
-
-    /// State property
-    #[zbus(property)]
-    fn state(&self) -> zbus::Result<u32>;
 
     /// Version property
     #[zbus(property)]

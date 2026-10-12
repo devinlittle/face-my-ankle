@@ -136,6 +136,7 @@ command_args="--interface=ap0 --bind-interfaces --except-interface=lo \
 --address=/monitor-THIS.ankle/172.30.30.1 \
 --address=/feet.feet/172.30.30.1 \
 --address=/ankle.feet/172.30.30.1 \
+--address=/api.config.ankle/172.30.30.1 \
 --no-resolv --pid-file=/run/dnsmasq-ap.pid"
 command_background=true
 pidfile="/run/dnsmasq-ap.pid"

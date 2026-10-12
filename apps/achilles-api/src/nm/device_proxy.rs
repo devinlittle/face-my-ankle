@@ -56,8 +56,13 @@ pub trait Device {
     ) -> zbus::Result<()>;
 
     /// StateChanged signal
-    //#[zbus(signal)]
-    //fn state_changed(&self, new_state: u32, old_state: u32, reason: u32) -> zbus::Result<()>;
+    #[zbus(signal, name = "StateChanged")]
+    fn state_changed_use_this_one(
+        &self,
+        new_state: u32,
+        old_state: u32,
+        reason: u32,
+    ) -> zbus::Result<()>;
 
     /// ActiveConnection property
     #[zbus(property)]

@@ -22,8 +22,7 @@
 use zbus::proxy;
 #[proxy(
     interface = "org.freedesktop.NetworkManager.Device.Statistics",
-    default_service = "org.freedesktop.NetworkManager",
-    default_path = "/org/freedesktop/NetworkManager/Devices/1"
+    default_service = "org.freedesktop.NetworkManager"
 )]
 pub trait Statistics {
     /// RefreshRateMs property

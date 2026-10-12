@@ -20,10 +20,7 @@ pub async fn active_proxy<'a>(
     ActiveProxy::builder(conn).path(dev)?.build().await
 }
 
-pub async fn nm_proxy<'a>(
-    conn: &'a Connection,
-    dev: &'a OwnedObjectPath,
-) -> Result<NetworkManagerProxy<'a>, zbus::Error> {
+pub async fn nm_proxy<'a>(conn: &'a Connection) -> Result<NetworkManagerProxy<'a>, zbus::Error> {
     NetworkManagerProxy::builder(conn).build().await
 }
 
@@ -132,7 +129,7 @@ pub async fn connect(
     ssid: &str,
     password: Option<&str>,
 ) -> Result<OwnedObjectPath> {
-    let nm = nm_proxy(conn, dev).await?;
+    let nm = nm_proxy(conn).await?;
     let none = ObjectPath::try_from("/")?;
 
     if let Some(saved) = find_saved_connection(conn, ssid).await? {

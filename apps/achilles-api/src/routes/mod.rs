@@ -3,11 +3,18 @@ use axum::{
     routing::{get, post},
 };
 use sqlx::SqlitePool;
+use tokio::sync::{broadcast, watch};
 use utoipa::{
     OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_scalar::{Scalar, Servable};
+use zbus::Connection;
+
+use crate::{
+    nm::{net_main::network_task_catalyst, network_manager_proxy::NetworkManagerProxy},
+    structs::net::{NetStatistics, ZbusCon},
+};
 
 mod auth;
 mod net;
@@ -23,11 +30,15 @@ mod ws;
         crate::routes::auth::logout_handler,
     ),
     components(schemas(
-        crate::structs::RegisterInput,
-        crate::structs::LoginInput,
-        crate::structs::LoginOutput,
+        crate::structs::auth::RegisterInput,
+        crate::structs::auth::LoginInput,
+        crate::structs::auth::LoginOutput,
         crate::structs::Claims,
         crate::structs::AuthenticatedUser,
+        crate::structs::ws::Bootstrap,
+        crate::structs::ws::SubscriptionTopic,
+        crate::structs::ws::SubscriptionEvent,
+        crate::structs::net::NetStatistics,
     )),
     modifiers(&JwtBearer, &CookieAuth),
     tags()
@@ -76,9 +87,38 @@ pub async fn health() -> Result<(), axum::http::StatusCode> {
 }
 
 #[derive(Clone, Debug)]
-struct AppState {}
+pub struct AppState {
+    pub pool: SqlitePool,
+    pub zbus_con: ZbusCon,
+    pub interface_stats: watch::Sender<NetStatistics>,
+}
 
-pub fn create_routes(pool: SqlitePool) -> Router {
+pub async fn create_routes(pool: SqlitePool) -> Router {
+    let connection = Connection::system()
+        .await
+        .expect("Failed to setup D-Bus System Conntection");
+
+    // TODO: maybe make the interface to find based on an env var?
+    let wlan0 = NetworkManagerProxy::new(&connection)
+        .await
+        .expect("Failed to setup D-Bus NM Device Conntection")
+        .get_device_by_ip_iface("wlan0")
+        .await
+        .expect("can't find the wlan0 interface");
+
+    let zbus_con = (connection, wlan0);
+    // Run init things for zbus net?
+
+    let interface_stats = watch::Sender::<NetStatistics>::new(NetStatistics::default());
+
+    let app_state = AppState {
+        pool: pool.clone(),
+        zbus_con: zbus_con.clone(),
+        interface_stats,
+    };
+
+    let _ = network_task_catalyst(&zbus_con, app_state.clone()).await;
+
     let openapi = DaApiDoc::openapi();
 
     let routes_without_middleware = Router::new()
@@ -94,15 +134,20 @@ pub fn create_routes(pool: SqlitePool) -> Router {
         .route("/auth/register", post(auth::register_handler))
         .route("/auth/login", post(auth::login_handler))
         .route("/auth/refresh", post(auth::refresh_handler))
-        .route("/auth/logout", post(auth::logout_handler));
+        .route("/auth/logout", post(auth::logout_handler))
+        .with_state(pool);
 
-    let routes_with_middleware = Router::new()
-        .route("/health_MIDDLE", get(health))
-        .layer(axum::middleware::from_fn(crate::middleware::jwt::jwt_auth));
+    let singular_websocket_roouter = Router::new()
+        .route("/ws", get(ws::ws))
+        .with_state(app_state.clone());
+
+    let routes_with_middleware = Router::new().route("/health_MIDDLE", get(health)).layer(
+        axum::middleware::from_fn_with_state(app_state.clone(), crate::middleware::jwt::jwt_auth),
+    );
 
     Router::new()
         .merge(routes_without_middleware)
         .merge(routes_with_middleware)
+        .merge(singular_websocket_roouter)
         .merge(Scalar::with_url("/api-docs/scalar", openapi))
-        .with_state(pool)
 }

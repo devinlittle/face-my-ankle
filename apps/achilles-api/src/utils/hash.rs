@@ -12,10 +12,7 @@ use sha2::{Digest, Sha256};
 use crate::utils::secrets::SECRETS;
 
 pub fn hash_password(password: String) -> Result<String, StatusCode> {
-    let salt = &SECRETS.hash_secret;
-    let salt = SaltString::from_b64(salt)
-        .expect("SaltString initilization")
-        .to_salt();
+    let salt = SaltString::generate().to_salt();
 
     let argon2 = Argon2::default();
 

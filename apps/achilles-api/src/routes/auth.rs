@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use axum::{Json, extract::State, http::HeaderValue, response::IntoResponse};
 use axum_extra::{
     TypedHeader,
@@ -8,13 +6,16 @@ use axum_extra::{
 use chrono::{DateTime, Duration, Utc};
 use hyper::{HeaderMap, StatusCode, header::SET_COOKIE};
 use jsonwebtoken::{EncodingKey, Header};
-use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
+use std::str::FromStr;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::{
-    structs::{Claims, LoginInput, LoginOutput, RegisterInput},
+    structs::{
+        Claims,
+        auth::{LoginInput, LoginOutput, RegisterInput},
+    },
     utils::{
         hash::{hash, hash_password, verify_password},
         rng::generate_random_string,

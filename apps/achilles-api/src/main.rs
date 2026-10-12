@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
 
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    let app = Router::new().merge(routes::create_routes(pool).layer(cors));
+    let app = Router::new().merge(routes::create_routes(pool).await.layer(cors));
     let handle = axum_server::Handle::new();
     let shutdown_signal_handler = shutdown_signal(handle);
 

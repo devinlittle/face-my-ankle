@@ -3,22 +3,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct RegisterInput {
-    #[schema(example = "user")]
-    pub username: String,
-    #[schema(example = "password")]
-    pub password: String,
-}
+pub mod auth;
+pub mod net;
+pub mod ws;
 
-pub type LoginInput = RegisterInput;
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct LoginOutput {
-    pub access_token: String,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, ToSchema)]
+/// Encoded to a JWT
+#[derive(Serialize, Deserialize, PartialEq, ToSchema, Debug, Clone)]
 pub struct Claims {
     pub sub: Uuid,
     pub username: String,
@@ -29,6 +19,7 @@ pub struct Claims {
     pub exp: DateTime<Utc>,
 }
 
+/// a jwt contents excluding the `iat` and `exp`
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, ToSchema)]
 pub struct AuthenticatedUser {
     pub id: Uuid,
