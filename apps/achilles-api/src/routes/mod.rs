@@ -1,6 +1,6 @@
 use axum::{
-    Json, Router,
     routing::{delete, get, patch, post},
+    Json, Router,
 };
 use sqlx::SqlitePool;
 use std::{sync::Arc, time::Duration};
@@ -9,8 +9,8 @@ use tokio::{
     time::sleep,
 };
 use utoipa::{
-    OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    OpenApi,
 };
 use utoipa_scalar::{Scalar, Servable};
 use zbus::Connection;
@@ -147,7 +147,7 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         interface_stats,
     });
 
-    let _ = network_task_catalyst(&zbus_con, app_state.clone()).await;
+    let _ = network_task_catalyst(app_state.clone()).await;
 
     let openapi = DaApiDoc::openapi();
 
@@ -177,6 +177,8 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         .route("/net/wifi/networks", get(net::get_networks))
         .route("/net/wifi/connect", post(net::connect_to_network))
         .route("/net/wifi/disconnect", delete(net::disconnect_from_network))
+        .route("/net/wifi/{ssid}", delete(net::forget_network))
+        .route("/net/wifi/{ssid}", get(net::get_ap_info))
         .layer(axum::middleware::from_fn_with_state(
             Arc::clone(&app_state),
             crate::middleware::jwt::jwt_auth,

@@ -229,3 +229,30 @@ pub async fn request_scan(conn: &Connection, dev: &OwnedObjectPath) -> Result<()
 
     Ok(())
 }
+
+pub async fn get_ap_info(conn: &Connection, dev: &OwnedObjectPath, ssid: String) -> Result<ApInfo> {
+    let w = wireless_proxy(conn, dev).await?;
+    for p in w.get_all_access_points().await? {
+        if let Ok(ap) = read_ap(conn, p).await
+            && !ap.ssid.is_empty()
+            && ap.ssid == ssid
+        {
+            return Ok(ap);
+        }
+    }
+
+    Err(anyhow::anyhow!("AP Not Found"))
+}
+
+/* 
+async fn list_saved_connections(conn: &Connection) -> Result<Option<Vec<ApInfo>>> {
+    let settings = SettingsProxy::new(conn).await?;
+
+    let ap: Vec<ApInfo> = Vec::new();
+
+    for p in settings.list_connections().await? {
+        let sc = ConnectionProxy::builder(conn).path(&p)?.build().await?;
+    }
+    Ok(None)
+}
+*/

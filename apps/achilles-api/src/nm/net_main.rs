@@ -11,38 +11,32 @@ use std::{
 };
 use tokio::{
     task::JoinHandle,
-    time::{Instant, interval},
+    time::{interval, Instant},
 };
 use tracing::info;
-use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
-    nm::helpers::{read_ap, wireless_proxy},
+    nm::helpers::{active_proxy, read_ap, wireless_proxy},
     routes::AppState,
     structs::net::{NetStatistics, ZbusCon},
 };
 
-#[derive(Debug)]
+// TODO: make this an arc swap and have some specific task dynamically insert their JoinHandle(s) to it
+
+/* #[derive(Debug)]
 pub struct NMTasks {
     pub statistics_task: Option<JoinHandle<()>>,
     // device_status_task: JoinHandle<()>,
+    active_connection_task: Option<JoinHandle<()>>,
     access_point_task: Option<JoinHandle<()>>,
-}
+} */
 
 /// Spawns all tasks for tokio sync and broacasts
-pub async fn network_task_catalyst(
-    zbus_con: &ZbusCon,
-    app_state: Arc<AppState>,
-) -> Result<NMTasks> {
-    let (conn, dev) = zbus_con.clone();
+pub async fn network_task_catalyst(app_state: Arc<AppState>) -> Result<()> {
+    let _statistics_task = spawn_net_stats_task_worker(Arc::clone(&app_state)).await?;
+    let _access_point_task = spawn_access_point_worker(Arc::clone(&app_state)).await?;
 
-    let statistics_task = spawn_net_stats_task_worker(Arc::clone(&app_state)).await?;
-    let access_point_task = spawn_access_point_worker(Arc::clone(&app_state)).await?;
-
-    Ok(NMTasks {
-        statistics_task: Some(statistics_task),
-        access_point_task: Some(access_point_task),
-    })
+    Ok(())
 }
 
 pub async fn spawn_net_stats_task_worker(app_state: Arc<AppState>) -> Result<JoinHandle<()>> {
@@ -144,15 +138,19 @@ fn calculate_throughput(
     (rx_delta as f64 / secs, tx_delta as f64 / secs)
 }
 
-pub async fn spawn_device_status_worker(
-    conn: Connection,
-    dev: OwnedObjectPath,
+/* 
+puync fn spawn_active_connection_worker(
+   zbus_conn: Connection,
+    active_con: OwnedObjectPath,
     app_state: AppState,
 ) -> Result<JoinHandle<()>> {
+    let active = active_proxy(&conn, &dev).await;
     let handle = tokio::spawn(async move {});
 
     Ok(handle)
 }
+
+*/
 
 pub async fn spawn_access_point_worker(app_state: Arc<AppState>) -> Result<JoinHandle<()>> {
     let wireless_proxy = wireless_proxy(&app_state.zbus_con.0, &app_state.zbus_con.1).await?;

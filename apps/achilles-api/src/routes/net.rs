@@ -1,17 +1,21 @@
-use axum::{Extension, Json, extract::State, response::IntoResponse};
+use axum::{
+    extract::{Path, State},
+    response::IntoResponse,
+    Extension, Json,
+};
 use hyper::StatusCode;
 use std::sync::Arc;
 use tracing::{error, info, warn};
 
 use crate::{
     nm::helpers::{
+        connect, disconnect, forget, list_networks, request_scan, set_wifi_enabled,
         WifiConnectionError::{DoesNotExist, PasswordWrong},
-        connect, disconnect, list_networks, request_scan, set_wifi_enabled,
     },
     routes::AppState,
     structs::{
-        AuthenticatedUser,
         net::{AccessPoint, SetWifiStatusInput, WifiConnectInput},
+        AuthenticatedUser,
     },
 };
 
@@ -147,8 +151,11 @@ pub async fn disconnect_from_network(
 #[utoipa::path(
     delete,
     path = "/net/wifi/{ssid}",
+    params(
+        ("ssid", description = "SSID of network to forget")
+    ),
     responses(
-        (status = 200, description = "Successfully forgot network", body = Vec<AccessPoint>),
+        (status = 200, description = "Successfully forgot network"),
         (status = 500, description = "Unable to scan")
     ),
     tag = "net"
@@ -156,14 +163,65 @@ pub async fn disconnect_from_network(
 pub async fn forget_network(
     State(state): State<Arc<AppState>>,
     Extension(_user): Extension<AuthenticatedUser>,
+    Path(ssid): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    disconnect(&state.zbus_con.0, &state.zbus_con.1)
+    forget(&state.zbus_con.0, ssid.as_str())
         .await
         .map_err(|_| {
-            warn!("failed to disconnect from network");
+            warn!("failed to forget network");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    info!("disconnected from WiFi");
+    info!("Forgotton WiFi Network");
     Ok(().into_response())
 }
+
+#[utoipa::path(
+    get,
+    path = "/net/wifi/{ssid}",
+    params(
+        ("ssid", description = "SSID of network to forget")
+    ),
+    responses(
+        (status = 200, description = "Returns AP into", body = AccessPoint),
+        (status = 404, description = "AP not found")
+    ),
+    tag = "net"
+)]
+pub async fn get_ap_info(
+    State(state): State<Arc<AppState>>,
+    Extension(_user): Extension<AuthenticatedUser>,
+    Path(ssid): Path<String>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let ap = crate::nm::helpers::get_ap_info(&state.zbus_con.0, &state.zbus_con.1, ssid)
+        .await
+        .map_err(|_| {
+            warn!("failed to get ap information");
+            StatusCode::NOT_FOUND
+        })?;
+
+    let ap: AccessPoint = AccessPoint::from(&ap);
+
+    info!("Forgotton WiFi Network");
+    Ok(Json(ap).into_response())
+}
+
+/*
+#[utoipa::path(
+    get,
+    path = "/net/wifi/saved_connctions",
+    responses(
+        (status = 200, description = "Returns AP into", body = Vec<AccessPoint>),
+        (status = 500, description = "Unable to get info")
+    ),
+    tag = "net"
+)]
+pub async fn list_saved_connections(
+    State(state): State<Arc<AppState>>,
+    Extension(_user): Extension<AuthenticatedUser>,
+    Path(ssid): Path<String>,
+) -> Result<impl IntoResponse, StatusCode> {
+    info!("Forgotton WiFi Network");
+    Ok(Json("").into_response())
+}
+*/
