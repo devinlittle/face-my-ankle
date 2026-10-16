@@ -6,7 +6,7 @@ use std::{net::SocketAddr, str::FromStr, time::Duration};
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing::info;
-use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 use utils::secrets::SECRETS;
 
 mod middleware;
@@ -37,20 +37,22 @@ async fn main() -> Result<()> {
     let origins = [
         "http://127.0.0.1:5173".parse().unwrap(),
         "https://127.0.0.1:5173".parse().unwrap(),
-        "http://127.0.0.1:80".parse().unwrap(),
-        "https://127.0.0.1:80".parse().unwrap(),
-        "http://ankle.local:80".parse().unwrap(),
-        "https://ankle.local:80".parse().unwrap(),
-        "http://config.ankle:80".parse().unwrap(),
-        "https://config.ankle:80".parse().unwrap(),
-        "http://ankle.monitor:80".parse().unwrap(),
-        "https://ankle.monitor:80".parse().unwrap(),
-        "http://monitor-THIS.ankle:80".parse().unwrap(),
-        "https://monitor_this.ankle:80".parse().unwrap(),
-        "http://feet.feet:80".parse().unwrap(),
-        "https://feet.feet:80".parse().unwrap(),
-        "http://ankle.feet:80".parse().unwrap(),
-        "https://ankle.feet:80".parse().unwrap(),
+        "http://localhost:5173".parse().unwrap(),
+        "https://localhost:5173".parse().unwrap(),
+        "http://127.0.0.1".parse().unwrap(),
+        "https://127.0.0.1".parse().unwrap(),
+        "http://ankle.local".parse().unwrap(),
+        "https://ankle.local".parse().unwrap(),
+        "http://config.ankle".parse().unwrap(),
+        "https://config.ankle".parse().unwrap(),
+        "http://ankle.monitor".parse().unwrap(),
+        "https://ankle.monitor".parse().unwrap(),
+        "http://monitor-THIS.ankle".parse().unwrap(),
+        "https://monitor_this.ankle".parse().unwrap(),
+        "http://feet.feet".parse().unwrap(),
+        "https://feet.feet".parse().unwrap(),
+        "http://ankle.feet".parse().unwrap(),
+        "https://ankle.feet".parse().unwrap(),
     ];
 
     let cors = CorsLayer::new()
