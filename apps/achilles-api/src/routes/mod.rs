@@ -1,6 +1,6 @@
 use axum::{
-    routing::{delete, get, patch, post},
     Json, Router,
+    routing::{delete, get, patch, post},
 };
 use sqlx::SqlitePool;
 use std::{sync::Arc, time::Duration};
@@ -9,8 +9,8 @@ use tokio::{
     time::sleep,
 };
 use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     OpenApi,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_scalar::{Scalar, Servable};
 use zbus::Connection;
@@ -38,6 +38,8 @@ mod ws;
         crate::routes::net::get_networks,
         crate::routes::net::connect_to_network,
         crate::routes::net::disconnect_from_network,
+        crate::routes::net::forget_network,
+        crate::routes::net::get_ap_info,
     ),
     components(
         schemas(
@@ -49,6 +51,7 @@ mod ws;
             crate::structs::ws::Bootstrap,
             crate::structs::ws::SubscriptionTopic,
             crate::structs::ws::SubscriptionEvent,
+            crate::structs::ws::IncomingMessage<NetStatistics>,
             crate::structs::net::NetStatistics,
             crate::structs::net::SetWifiStatusInput,
             crate::structs::net::AccessPoint,

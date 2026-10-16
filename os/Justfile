@@ -66,6 +66,8 @@ doctor:
   i_need mkfs.ext4
   i_need apk
   i_need tar
+  i_need bun
+  i_need cargo
 
   if ! command -v xchroot >/dev/null && ! command -v arch-chroot >/dev/null; then
     info "Please install 'arch-install-scripts' or 'xtools'"

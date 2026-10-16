@@ -10,6 +10,9 @@ build:
   echo Building Achilles UI
   bun --bun run build
 
+dev:
+  @bun --bun run dev --host
+
 package-tar:
   #!/usr/bin/env bash
   rm -rf build
@@ -28,5 +31,5 @@ package-tar:
   rm *.tar.zst
   tar -cvf - -C build . | zstd -T0 -o achilles-ui.tar.zst
 
-dev:
-  @bun --bun run dev
+gen-api url="0.0.0.0:3000":
+  bunx openapi-typescript "http://{{url}}/api-docs/openapi.json" -o "./src/lib/types/api.ts"

@@ -22,6 +22,12 @@ pub enum SubscriptionEvent {
     Query,
 }
 
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct IncomingMessage<T: utoipa::ToSchema> {
+    pub topic: SubscriptionTopic,
+    pub payload: T,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct SubscriptionState {
     pub wifi_scan: bool,

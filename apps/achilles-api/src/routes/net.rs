@@ -1,7 +1,7 @@
 use axum::{
+    Extension, Json,
     extract::{Path, State},
     response::IntoResponse,
-    Extension, Json,
 };
 use hyper::StatusCode;
 use std::sync::Arc;
@@ -9,13 +9,13 @@ use tracing::{error, info, warn};
 
 use crate::{
     nm::helpers::{
-        connect, disconnect, forget, list_networks, request_scan, set_wifi_enabled,
         WifiConnectionError::{DoesNotExist, PasswordWrong},
+        connect, disconnect, forget, list_networks, request_scan, set_wifi_enabled,
     },
     routes::AppState,
     structs::{
-        net::{AccessPoint, SetWifiStatusInput, WifiConnectInput},
         AuthenticatedUser,
+        net::{AccessPoint, SetWifiStatusInput, WifiConnectInput},
     },
 };
 
@@ -73,7 +73,7 @@ pub async fn scan_wifi(
     path = "/net/wifi/networks",
     responses(
         (status = 200, description = "Scan intiated", body = Vec<AccessPoint>),
-        (status = 500, description = "Unable to scan")
+        (status = 500, description = "Unable to get networks")
     ),
     tag = "net"
 )]
@@ -96,7 +96,7 @@ pub async fn get_networks(
 }
 
 #[utoipa::path(
-    get,
+    post,
     path = "/net/wifi/connect",
     request_body = WifiConnectInput,
     responses(
@@ -129,7 +129,7 @@ pub async fn connect_to_network(
     path = "/net/wifi/disconnect",
     responses(
         (status = 200, description = "Disconnected successfully"),
-        (status = 500, description = "Unable to scan")
+        (status = 500, description = "Unable to disconnect from network")
     ),
     tag = "net"
 )]
@@ -156,7 +156,7 @@ pub async fn disconnect_from_network(
     ),
     responses(
         (status = 200, description = "Successfully forgot network"),
-        (status = 500, description = "Unable to scan")
+        (status = 500, description = "Unable to forget network")
     ),
     tag = "net"
 )]

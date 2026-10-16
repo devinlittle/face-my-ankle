@@ -15,12 +15,16 @@ export default defineConfig({
         {
           buildOptions: {
             compile: {
-              target: 'bun-linux-arm64-musl',
+              target: (process.env.TARGET ?? 'bun-linux-arm64-musl') as Bun.Build.CompileTarget,
               outfile: 'achilles-ui',
             },
             minify: true,
             bytecode: true,
             sourcemap: 'linked'
+          },
+          serverOptions: {
+            hostname: "0.0.0.0",
+            port: "80"
           }
         },
       )

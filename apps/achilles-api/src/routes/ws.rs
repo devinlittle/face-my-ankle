@@ -10,10 +10,14 @@ use std::sync::Arc;
 
 use crate::{
     routes::AppState,
-    structs::ws::{
-        Bootstrap,
-        SubscriptionEvent::{self, *},
-        SubscriptionState,
+    structs::{
+        net::NetStatistics,
+        ws::{
+            Bootstrap, IncomingMessage,
+            SubscriptionEvent::{self, *},
+            SubscriptionState,
+            SubscriptionTopic::NetworkMetrics,
+        },
     },
     utils::jwt::jwt_auth,
 };
@@ -101,6 +105,12 @@ pub async fn ws(
                     match result {
                         Ok(()) => {
                             let stats = interface_stats_rx.borrow_and_update().to_owned();
+
+                            let stats: IncomingMessage<NetStatistics> = IncomingMessage {
+                                topic: NetworkMetrics,
+                                payload: stats
+                            };
+
                             let Ok(json) = serde_json::to_string(&stats) else { break; };
 
                             let _ = socket.send(Message::Text(json.into())).await;

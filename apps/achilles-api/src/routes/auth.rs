@@ -111,7 +111,7 @@ pub async fn login_handler(
         let refresh_token = generate_random_string();
 
         let refresh_cookie = format!(
-            "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+            "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
             refresh_token,
             60 * 60 * 24 * 365 // this is a year - Devin Little
         );
@@ -303,7 +303,7 @@ pub async fn refresh_handler(
     })?;
 
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
         refresh_token,
         60 * 60 * 24 * 365 // this is a year - Devin Little
     );
@@ -370,8 +370,7 @@ pub async fn logout_handler(
     })?
     .user_id;
 
-    let empty_refresh_cookie =
-        "refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0";
+    let empty_refresh_cookie = "refresh_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
 
     let mut headers = HeaderMap::new();
 
