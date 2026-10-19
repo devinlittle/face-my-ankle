@@ -1,5 +1,5 @@
 use axum::{
-    Extension, Json,
+    Json,
     extract::{Path, State},
     response::IntoResponse,
 };
@@ -31,7 +31,6 @@ use crate::{
 )]
 pub async fn set_wifi_status(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
     Json(req): Json<SetWifiStatusInput>,
 ) -> Result<impl IntoResponse, StatusCode> {
     set_wifi_enabled(&state.zbus_con.0, req.enabled)
@@ -56,7 +55,6 @@ pub async fn set_wifi_status(
 )]
 pub async fn scan_wifi(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
 ) -> Result<impl IntoResponse, StatusCode> {
     request_scan(&state.zbus_con.0, &state.zbus_con.1)
         .await
@@ -79,9 +77,8 @@ pub async fn scan_wifi(
 )]
 pub async fn get_networks(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let output: Vec<AccessPoint> = list_networks(&state.zbus_con.0, &state.zbus_con.1)
+    let mut output: Vec<AccessPoint> = list_networks(&state.zbus_con.0, &state.zbus_con.1)
         .await
         .map_err(|err| {
             error!("Error retrieving networks: {:?}", err);
@@ -90,6 +87,9 @@ pub async fn get_networks(
         .iter()
         .map(AccessPoint::from)
         .collect();
+
+    // Having networks displaued in order of strongest
+    output.reverse();
 
     info!("Returned a list of near by WiFi networks");
     Ok(Json(output).into_response())
@@ -109,7 +109,6 @@ pub async fn get_networks(
 )]
 pub async fn connect_to_network(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
     Json(req): Json<WifiConnectInput>,
 ) -> Result<impl IntoResponse, StatusCode> {
     connect(&state.zbus_con.0, &state.zbus_con.1, req.ssid, req.password)
@@ -135,7 +134,6 @@ pub async fn connect_to_network(
 )]
 pub async fn disconnect_from_network(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
 ) -> Result<impl IntoResponse, StatusCode> {
     disconnect(&state.zbus_con.0, &state.zbus_con.1)
         .await
@@ -162,7 +160,6 @@ pub async fn disconnect_from_network(
 )]
 pub async fn forget_network(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
     Path(ssid): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     forget(&state.zbus_con.0, ssid.as_str())
@@ -190,7 +187,6 @@ pub async fn forget_network(
 )]
 pub async fn get_ap_info(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
     Path(ssid): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let ap = crate::nm::helpers::get_ap_info(&state.zbus_con.0, &state.zbus_con.1, ssid)
@@ -218,7 +214,6 @@ pub async fn get_ap_info(
 )]
 pub async fn list_saved_connections(
     State(state): State<Arc<AppState>>,
-    Extension(_user): Extension<AuthenticatedUser>,
     Path(ssid): Path<String>,
 ) -> Result<impl IntoResponse, StatusCode> {
     info!("Forgotton WiFi Network");

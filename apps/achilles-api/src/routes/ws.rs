@@ -36,6 +36,9 @@ pub async fn ws(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     Ok(ws.on_upgrade(move |mut socket| async move {
+
+        //TODO: removed for now because of auth issues
+        /*
         let Some(Ok(Message::Text(msg))) = socket.recv().await else {
             let _ = socket
                 .send(Message::Text(
@@ -59,6 +62,7 @@ pub async fn ws(
         let Ok(_user) = jwt_auth(&bootstrap).await else {
             return;
         };
+        */
 
         let mut interface_stats_rx = state.interface_stats.subscribe();
         let mut subs = SubscriptionState::new();

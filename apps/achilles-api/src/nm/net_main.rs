@@ -11,14 +11,14 @@ use std::{
 };
 use tokio::{
     task::JoinHandle,
-    time::{interval, Instant},
+    time::{Instant, interval},
 };
 use tracing::info;
 
 use crate::{
     nm::helpers::{active_proxy, read_ap, wireless_proxy},
     routes::AppState,
-    structs::net::{NetStatistics, ZbusCon},
+    structs::net::NetStatistics,
 };
 
 // TODO: make this an arc swap and have some specific task dynamically insert their JoinHandle(s) to it
@@ -138,7 +138,7 @@ fn calculate_throughput(
     (rx_delta as f64 / secs, tx_delta as f64 / secs)
 }
 
-/* 
+/*
 puync fn spawn_active_connection_worker(
    zbus_conn: Connection,
     active_con: OwnedObjectPath,

@@ -164,10 +164,10 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         )
         .route("/health", get(health))
         // Auth Routes
-        .route("/auth/register", post(auth::register_handler))
+        /*.route("/auth/register", post(auth::register_handler))
         .route("/auth/login", post(auth::login_handler))
         .route("/auth/refresh", post(auth::refresh_handler))
-        .route("/auth/logout", post(auth::logout_handler))
+        .route("/auth/logout", post(auth::logout_handler)) */
         .with_state(pool);
 
     let singular_websocket_roouter = Router::new()
@@ -182,10 +182,10 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         .route("/net/wifi/disconnect", delete(net::disconnect_from_network))
         .route("/net/wifi/{ssid}", delete(net::forget_network))
         .route("/net/wifi/{ssid}", get(net::get_ap_info))
-        .layer(axum::middleware::from_fn_with_state(
+        /* .layer(axum::middleware::from_fn_with_state(
             Arc::clone(&app_state),
             crate::middleware::jwt::jwt_auth,
-        ))
+        )) */
         .with_state(Arc::clone(&app_state));
 
     Router::new()
