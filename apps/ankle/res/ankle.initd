@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+
+name="ankle"
+command="/usr/bin/ankle"
+
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/ankle/stdout.log"
+error_log="/var/log/ankle/stderr.log"
+
+export LOG_DIR
+export BONE_TO_PICK
+export RUST_LOG
+
+start_pre() {
+  mkdir -p /var/log/ankle
+}
+
+depend() {
+    after achilles-api
+}

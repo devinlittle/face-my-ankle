@@ -1,0 +1,3 @@
+LOG_DIR=/var/log/ankle
+BONE_TO_PICK=THIS_IS_A_SHARED_SECRET
+RUST_LOG=info
