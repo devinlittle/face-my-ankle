@@ -2,7 +2,8 @@
 resolver = "3"
 members = [
   "apps/achilles-api",
-  "apps/ankle"
+  "apps/ankle",
+  "crates/common"
 ]
 
 [workspace.package]
@@ -12,6 +13,7 @@ edition = "2024"
 license = "AGPL-3.0-only"
 
 [workspace.dependencies]
+common = {path = "./crates/common"}
 
 tokio = {version = "1.53.2", features = ["full"]}
 tokio-stream = "0.1.19"

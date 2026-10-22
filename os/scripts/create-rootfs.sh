@@ -67,8 +67,8 @@ sudoif chmod +x "$MOUNT/finalize.sh"
 
 info "Copying over the build artifacts"
 cd $SCRIPT_DIR
-just api::package-tar ui::package-tar
-sudoif cp -v $SCRIPT_DIR/apps/{achilles-ui/,achilles-api/}/*.tar.zst $MOUNT
+just api::package-tar ankle::package-tar ui::package-tar
+sudoif cp -v $SCRIPT_DIR/apps/{achilles-ui/,achilles-api/,ankle/}/*.tar.zst $MOUNT
 cd $SCRIPT_DIR/os
 
 # Detects which chroot helper to use

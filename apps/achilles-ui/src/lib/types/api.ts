@@ -217,6 +217,19 @@ export interface components {
             session_id: string;
             username: string;
         };
+        BatteryInfo: {
+            /**
+             * Format: double
+             * @description Not the most acurate thing
+             */
+            bad_precent: number;
+            /** Format: double */
+            current_amps: number;
+            /** Format: double */
+            power_watts: number;
+            /** Format: double */
+            voltage: number;
+        };
         Bootstrap: {
             token: string;
         };
@@ -232,6 +245,22 @@ export interface components {
             sub: string;
             username: string;
         };
+        IncomingMessage_BatteryInfo: {
+            payload: {
+                /**
+                 * Format: double
+                 * @description Not the most acurate thing
+                 */
+                bad_precent: number;
+                /** Format: double */
+                current_amps: number;
+                /** Format: double */
+                power_watts: number;
+                /** Format: double */
+                voltage: number;
+            };
+            topic: components["schemas"]["SubscriptionTopic"];
+        };
         IncomingMessage_NetStatistics: {
             payload: {
                 /** Format: double */
@@ -243,6 +272,10 @@ export interface components {
                 /** Format: int64 */
                 tx_bytes: number;
             };
+            topic: components["schemas"]["SubscriptionTopic"];
+        };
+        IncomingMessage_bool: {
+            payload: boolean;
             topic: components["schemas"]["SubscriptionTopic"];
         };
         LoginOutput: {
@@ -280,7 +313,7 @@ export interface components {
             action: "query";
         };
         /** @enum {string} */
-        SubscriptionTopic: "wifi_scan" | "device_status" | "network_metrics";
+        SubscriptionTopic: "wifi_scan" | "device_status" | "network_metrics" | "battery_info" | "critical_information";
         WifiConnectInput: {
             password?: string | null;
             ssid: string;
@@ -506,7 +539,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unable to scan */
+            /** @description Unable to disconnect from network */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -562,7 +595,7 @@ export interface operations {
                     "application/json": components["schemas"]["AccessPoint"][];
                 };
             };
-            /** @description Unable to scan */
+            /** @description Unable to get networks */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -645,7 +678,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unable to scan */
+            /** @description Unable to forget network */
             500: {
                 headers: {
                     [name: string]: unknown;

@@ -5,6 +5,7 @@ use axum::{
     },
     response::IntoResponse,
 };
+use common::BatteryInfo;
 use hyper::StatusCode;
 use std::sync::Arc;
 
@@ -16,7 +17,7 @@ use crate::{
             Bootstrap, IncomingMessage,
             SubscriptionEvent::{self, *},
             SubscriptionState,
-            SubscriptionTopic::NetworkMetrics,
+            SubscriptionTopic::{self, CriticalInformation, NetworkMetrics},
         },
     },
     utils::jwt::jwt_auth,
@@ -65,6 +66,10 @@ pub async fn ws(
         */
 
         let mut interface_stats_rx = state.interface_stats.subscribe();
+        let mut battery_info_rx = state.battery_channel.subscribe();
+
+        let mut critical_rx = state.critical_channel.subscribe();
+
         let mut subs = SubscriptionState::new();
 
         loop {
@@ -118,6 +123,43 @@ pub async fn ws(
                             let Ok(json) = serde_json::to_string(&stats) else { break; };
 
                             let _ = socket.send(Message::Text(json.into())).await;
+                        }
+                        Err(_) => {
+                            break;
+                        }
+                    }
+                }
+                result = battery_info_rx.recv(), if subs.battery_info => {
+                    match result {
+                        Ok(info) => {
+                            let stats: IncomingMessage<BatteryInfo> = IncomingMessage {
+                                topic: SubscriptionTopic::BatteryInfo,
+                                payload: info
+                            };
+
+                            let Ok(json) = serde_json::to_string(&stats) else { break; };
+
+                            let _ = socket.send(Message::Text(json.into())).await;
+                        }
+                        Err(_) => {
+                            break;
+                        }
+                    }
+                }
+                result = critical_rx.changed() => {
+                    match result {
+                        Ok(()) => {
+                            let critical_info = {
+                                let Ok(critical_state) = state.critical_state.read() else { break; };
+                                IncomingMessage {
+                                    topic: CriticalInformation,
+                                    payload: *critical_state,
+                                }
+                            };
+
+                            let Ok(json) = serde_json::to_string(&critical_info) else { break; };
+
+                            let _ = socket.send(Message::Text(json.into())).await; 
                         }
                         Err(_) => {
                             break;

@@ -1,5 +1,6 @@
 mod api "apps/achilles-api"
 mod ui "apps/achilles-ui"
+mod ankle "apps/ankle"
 mod os "os"
 
 [private]

@@ -29,6 +29,3 @@ package-tar:
 
   rm *.tar.zst
   tar -cvf - -C build . | zstd -T0 -o achilles-api.tar.zst
-
-dev:
-  @bun --bun run dev

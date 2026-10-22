@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 pub mod auth;
+pub mod battery;
 pub mod net;
 pub mod ws;
 

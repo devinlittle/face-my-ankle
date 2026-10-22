@@ -27,6 +27,7 @@
     "#lib/*": "./src/lib/*"
   },
   "dependencies": {
+    "bits-ui": "^2.19.5",
     "openapi-fetch": "^0.17.0"
   }
 }

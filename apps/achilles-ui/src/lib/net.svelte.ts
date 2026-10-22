@@ -17,8 +17,5 @@ export const net_stats = {
 };
 
 export function handleNetworkStatistics(payload: NetStats) {
-
-  console.log(`NET_STATS: ${payload}`);
   net_stats.value = payload;
-
 }

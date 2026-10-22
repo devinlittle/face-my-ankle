@@ -17,6 +17,7 @@
     //    { href: "/login", label: "Login" },
     //    { href: "/register", label: "Register" },
     { href: "/net", label: "Net" },
+    { href: "/battery", label: "Battery" },
   ];
 </script>
 

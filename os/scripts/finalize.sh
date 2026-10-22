@@ -4,6 +4,7 @@ cat >/boot/config.txt <<EOF
 kernel=vmlinuz-rpi
 initramfs initramfs-rpi
 arm_64bit=1
+dtparam=i2c_arm=on
 include usercfg.txt
 EOF
 
@@ -24,13 +25,19 @@ EOF
 rc-update add root boot
 rc-update add localmount boot
 rc-update add fsck boot
-rc-update add hostname boot
 # Required for boot -end-
 
 echo "AnkleMonitor" >/etc/hostname
 echo "127.0.0.1 localhost AnkleMonitor" >>/etc/hosts
 rc-update add hostname boot
 
+# battery reading stuff
+cat >/etc/modules-load.d/i2c.conf <<'EOF'
+i2c-dev
+i2c-bcm2835
+EOF
+
+# basic user config
 cat >/etc/motd <<'EOF'
 This is my Ankle Monitor
 
@@ -70,7 +77,7 @@ echo "%nived ALL=(ALL:ALL) ALL" >>/etc/sudoers
 
 zstd -dc achilles-api.tar.zst | tar -xpf - -C /
 zstd -dc achilles-ui.tar.zst | tar -xpf - -C /
-#zstd -dc ankle.tar.zst | tar -xpf - -C /
+zstd -dc ankle.tar.zst | tar -xpf - -C /
 
 setcap 'cap_net_bind_service=+ep' /usr/bin/achilles-ui
 mkdir -p /etc/polkit-1/rules.d/
@@ -86,6 +93,7 @@ EOF
 
 rc-update add achilles-api default
 rc-update add achilles-ui default
+rc-update add ankle default
 rc-update add polkit
 rc-update add sshd default
 
@@ -169,6 +177,7 @@ rc-update add dnsmasq-ap default
 
 rc-update add dbus default
 rc-update add udev sysinit
+rc-update add udev-trigger sysinit # maybe remove this?
 
 rc-update add wpa_supplicant default
 

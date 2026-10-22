@@ -6,9 +6,10 @@ use std::{net::SocketAddr, str::FromStr, time::Duration};
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
 use utils::secrets::SECRETS;
 
+mod battery;
 mod middleware;
 mod nm;
 mod routes;
@@ -88,7 +89,7 @@ async fn main() -> Result<()> {
     let host_on = format!("{}:{}", SECRETS.host, SECRETS.port);
     let listener_tokio = tokio::net::TcpListener::bind(host_on).await.unwrap();
 
-    info!("Listening on {}", listener_tokio.local_addr().unwrap());
+    info!("Listening API on {}", listener_tokio.local_addr().unwrap());
     axum::serve(listener_tokio, app)
         .with_graceful_shutdown(shutdown_signal_handler)
         .await

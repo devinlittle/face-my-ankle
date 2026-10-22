@@ -31,3 +31,5 @@ dnsmasq
 hostapd
 wpa_supplicant
 eudev
+
+# add i2c-tools for debugging cuz hat address can change?

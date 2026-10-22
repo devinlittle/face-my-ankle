@@ -2,8 +2,12 @@ use axum::{
     Json, Router,
     routing::{delete, get, patch, post},
 };
+use common::{BatteryInfo, StatusMessage};
 use sqlx::SqlitePool;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 use tokio::{
     sync::{broadcast, watch},
     time::sleep,
@@ -16,6 +20,7 @@ use utoipa_scalar::{Scalar, Servable};
 use zbus::Connection;
 
 use crate::{
+    battery::worker::spawn_battery_worker,
     nm::{net_main::network_task_catalyst, network_manager_proxy::NetworkManagerProxy},
     structs::net::{NetStatistics, ZbusCon},
 };
@@ -52,6 +57,9 @@ mod ws;
             crate::structs::ws::SubscriptionTopic,
             crate::structs::ws::SubscriptionEvent,
             crate::structs::ws::IncomingMessage<NetStatistics>,
+            crate::battery::BatteryInfo,
+            crate::structs::ws::IncomingMessage<BatteryInfo>,
+            crate::structs::ws::IncomingMessage<bool>,
             crate::structs::net::NetStatistics,
             crate::structs::net::SetWifiStatusInput,
             crate::structs::net::AccessPoint,
@@ -110,9 +118,13 @@ pub async fn health() -> Result<(), axum::http::StatusCode> {
 
 #[derive(Clone, Debug)]
 pub struct AppState {
-    pub pool: SqlitePool,
+    pub _pool: SqlitePool,
     pub zbus_con: ZbusCon,
     pub interface_stats: watch::Sender<NetStatistics>,
+    pub battery_channel: broadcast::Sender<BatteryInfo>,
+    pub critical_channel: watch::Sender<()>,
+    pub critical_state: Arc<RwLock<bool>>,
+    pub status_socket: broadcast::Sender<StatusMessage>,
 }
 
 pub async fn create_routes(pool: SqlitePool) -> Router {
@@ -142,15 +154,24 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
     let zbus_con = (connection, wlan0);
 
     let interface_stats = watch::Sender::<NetStatistics>::new(NetStatistics::default());
+    let battery_channel = broadcast::Sender::<BatteryInfo>::new(16);
+    let critical_channel = watch::Sender::<()>::new(());
+    let critical_state = Arc::new(RwLock::new(false));
     //    let access_point_broadcast = broadcast::Sender::<NetStatistics>::new(NetStatistics::default());
+    let status_socket = broadcast::Sender::<StatusMessage>::new(8);
 
     let app_state = Arc::new(AppState {
-        pool: pool.clone(),
+        _pool: pool.clone(),
         zbus_con: zbus_con.clone(),
         interface_stats,
+        battery_channel,
+        critical_channel,
+        critical_state,
+        status_socket,
     });
 
     let _ = network_task_catalyst(app_state.clone()).await;
+    let _ = spawn_battery_worker(app_state.clone()).await;
 
     let openapi = DaApiDoc::openapi();
 

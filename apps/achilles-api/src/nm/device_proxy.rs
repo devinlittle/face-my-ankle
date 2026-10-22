@@ -19,6 +19,7 @@
 //!
 //! [Writing a client proxy]: https://z-galaxy.github.io/zbus/client.html
 //! [D-Bus standard interfaces]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces,
+use common::DeviceStatus;
 use zbus::proxy;
 #[proxy(
     interface = "org.freedesktop.NetworkManager.Device",
@@ -197,4 +198,28 @@ pub trait Device {
     /// Udi property
     #[zbus(property)]
     fn udi(&self) -> zbus::Result<String>;
+}
+
+// Source:
+// <https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nm-dbus-types.html#NMDeviceState>
+pub async fn get_device_status(device: &DeviceProxy<'_>) -> zbus::Result<DeviceStatus> {
+    let state = device.state().await?;
+
+    tracing::debug!(state = state, "NetworkManager device state");
+
+    Ok(match state {
+        0 => DeviceStatus::Unknown,
+        10 => DeviceStatus::Unmanaged,
+        20 => DeviceStatus::Unavailable,
+        30 => DeviceStatus::Disconnected,
+
+        // The device is in the process of connecting.
+        40 | 50 | 60 | 70 | 80 | 90 => DeviceStatus::Connecting,
+
+        100 => DeviceStatus::Connected,
+        110 => DeviceStatus::Disconnecting,
+        120 => DeviceStatus::Failed,
+
+        other => DeviceStatus::Unrecognized(other),
+    })
 }

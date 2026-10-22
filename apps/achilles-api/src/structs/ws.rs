@@ -12,6 +12,8 @@ pub enum SubscriptionTopic {
     WifiScan,
     DeviceStatus,
     NetworkMetrics,
+    BatteryInfo,
+    CriticalInformation,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -33,6 +35,7 @@ pub struct SubscriptionState {
     pub wifi_scan: bool,
     pub device_status: bool,
     pub network_metrics: bool,
+    pub battery_info: bool,
 }
 
 impl SubscriptionState {
@@ -45,6 +48,8 @@ impl SubscriptionState {
             SubscriptionTopic::WifiScan => self.wifi_scan = true,
             SubscriptionTopic::DeviceStatus => self.device_status = true,
             SubscriptionTopic::NetworkMetrics => self.network_metrics = true,
+            SubscriptionTopic::BatteryInfo => self.battery_info = true,
+            _ => (),
         }
     }
 
@@ -53,6 +58,8 @@ impl SubscriptionState {
             SubscriptionTopic::WifiScan => self.wifi_scan = false,
             SubscriptionTopic::DeviceStatus => self.device_status = false,
             SubscriptionTopic::NetworkMetrics => self.network_metrics = false,
+            SubscriptionTopic::BatteryInfo => self.battery_info = false,
+            _ => (),
         }
     }
 
@@ -61,6 +68,8 @@ impl SubscriptionState {
             SubscriptionTopic::WifiScan => self.wifi_scan,
             SubscriptionTopic::DeviceStatus => self.device_status,
             SubscriptionTopic::NetworkMetrics => self.network_metrics,
+            SubscriptionTopic::BatteryInfo => self.battery_info,
+            _ => false,
         }
     }
 

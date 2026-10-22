@@ -14,6 +14,7 @@ axum-extra.workspace = true
 axum-server.workspace = true
 base64.workspace = true
 chrono.workspace = true
+common = { workspace = true, features = ["utoipa"] }
 constant_time_eq.workspace = true
 directories.workspace = true
 dotenvy.workspace = true
@@ -21,6 +22,7 @@ futures-util.workspace = true
 hyper.workspace = true
 jsonwebtoken.workspace = true
 rand.workspace = true
+rpi-pal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

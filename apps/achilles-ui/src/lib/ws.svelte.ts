@@ -3,14 +3,17 @@ import { SvelteSet } from "svelte/reactivity";
 import { auth } from "./auth.svelte";
 import { handleNetworkStatistics } from "./net.svelte";
 import type { components } from "./types/api";
+import { handleBatteryInfo, handleCritical } from "./battery.svelte";
 
 type IncomingMessage = {
   topic: components["schemas"]["SubscriptionTopic"]
   payload: unknown
 }
-type NetStatistics = components["schemas"]["NetStatistics"];
+
 type SubscriptionEvent = components["schemas"]["SubscriptionEvent"];
 type SubscriptionTopic = components["schemas"]["SubscriptionTopic"];
+type NetStatistics = components["schemas"]["NetStatistics"];
+type BatteryInfo = components["schemas"]["BatteryInfo"]
 
 let _socketState = $state<"connected" | "connecting" | "disconnected" | "intial_page">("intial_page");
 
@@ -41,6 +44,12 @@ function handleMessage(msg: IncomingMessage) {
     case "device_status":
     case "network_metrics": {
       handleNetworkStatistics(msg.payload as NetStatistics)
+    }
+    case "battery_info": {
+      handleBatteryInfo(msg.payload as BatteryInfo)
+    }
+    case "critical_information": {
+      handleCritical(msg.payload as boolean)
     }
   }
 }
