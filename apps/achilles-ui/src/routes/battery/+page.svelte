@@ -1,17 +1,15 @@
 <script lang="ts">
-  import { subscribe, unsubscribe } from "#lib/ws.svelte.ts";
+  import { subscribe, subscribed_topics, unsubscribe } from "#lib/ws.svelte.ts";
   import { battery_info, is_critical } from "#lib/battery.svelte.ts";
 
-  let battery_info_subscribed = $state<boolean>(false);
+  let battery_info_subscribed = $derived(subscribed_topics.has("battery_info"));
 
   function subscribe_battery_info() {
     subscribe(["battery_info"]);
-    battery_info_subscribed = true;
   }
 
   function unsubscribe_battery_info() {
     unsubscribe(["battery_info"]);
-    battery_info_subscribed = false;
   }
 </script>
 

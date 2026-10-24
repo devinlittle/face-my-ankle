@@ -12,12 +12,12 @@ use std::sync::Arc;
 use crate::{
     routes::AppState,
     structs::{
-        net::NetStatistics,
+        net::{NetStatistics, DeviceStatus},
         ws::{
             Bootstrap, IncomingMessage,
             SubscriptionEvent::{self, *},
             SubscriptionState,
-            SubscriptionTopic::{self, CriticalInformation, NetworkMetrics},
+            SubscriptionTopic,
         },
     },
     utils::jwt::jwt_auth,
@@ -66,7 +66,7 @@ pub async fn ws(
         */
 
         let mut interface_stats_rx = state.interface_stats.subscribe();
-        let mut ip_interface_rx = state.interface_ip.subscribe();
+        let mut device_status_rx = state.device_status.subscribe();
         let mut battery_info_rx = state.battery_channel.subscribe();
 
         let mut critical_rx = state.critical_channel.subscribe();
@@ -117,7 +117,7 @@ pub async fn ws(
                             let stats = interface_stats_rx.borrow_and_update().to_owned();
 
                             let stats: IncomingMessage<NetStatistics> = IncomingMessage {
-                                topic: NetworkMetrics,
+                                topic: SubscriptionTopic::NetworkMetrics,
                                 payload: stats
                             };
 
@@ -130,17 +130,17 @@ pub async fn ws(
                         }
                     }
                 }
-                result = ip_interface_rx.changed(), if subs.device_status => {
+                result = device_status_rx.changed(), if subs.device_status => {
                     match result {
                         Ok(()) => {
-                            let ip = ip_interface_rx.borrow_and_update().to_owned();
+                            let status = device_status_rx.borrow_and_update().to_owned();
 
-                            let ip: IncomingMessage<Option<String>> = IncomingMessage {
-                                topic: NetworkMetrics,
-                                payload: ip,
+                            let status: IncomingMessage<DeviceStatus> = IncomingMessage {
+                                topic: SubscriptionTopic::DeviceStatus,
+                                payload: status,
                             };
 
-                            let Ok(json) = serde_json::to_string(&ip) else { break; };
+                            let Ok(json) = serde_json::to_string(&status) else { break; };
 
                             let _ = socket.send(Message::Text(json.into())).await;
                         }
@@ -172,7 +172,7 @@ pub async fn ws(
                             let critical_info = {
                                 let Ok(critical_state) = state.critical_state.read() else { break; };
                                 IncomingMessage {
-                                    topic: CriticalInformation,
+                                    topic: SubscriptionTopic::CriticalInformation,
                                     payload: *critical_state,
                                 }
                             };

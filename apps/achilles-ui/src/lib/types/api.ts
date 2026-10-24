@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/net/int/ip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_ip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/net/wifi/connect": {
         parameters: {
             query?: never;
@@ -245,6 +261,10 @@ export interface components {
             sub: string;
             username: string;
         };
+        DeviceStatus: "Unknown" | "Unmanaged" | "Unavailable" | "Disconnected" | "Connecting" | "Connected" | "Disconnecting" | "Failed" | {
+            /** Format: int32 */
+            Unrecognized: number;
+        };
         IncomingMessage_BatteryInfo: {
             payload: {
                 /**
@@ -258,6 +278,13 @@ export interface components {
                 power_watts: number;
                 /** Format: double */
                 voltage: number;
+            };
+            topic: components["schemas"]["SubscriptionTopic"];
+        };
+        IncomingMessage_DeviceStatus: {
+            payload: {
+                ip?: string | null;
+                status: components["schemas"]["DeviceStatus"];
             };
             topic: components["schemas"]["SubscriptionTopic"];
         };
@@ -477,6 +504,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_ip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns Private IP */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string | null;
+                };
             };
         };
     };

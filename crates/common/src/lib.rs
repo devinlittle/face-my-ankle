@@ -27,10 +27,8 @@ pub enum StatusPayload {
     // interface status
     IntStatus {
         status: DeviceStatus,
-    },
-
-    IntIP {
-        ip: String,
+        // In IPv4
+        ip: Option<String>,
     },
 
     BatteryInfo {
@@ -41,11 +39,13 @@ pub enum StatusPayload {
     SerializationError,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum DeviceStatus {
     Unknown,
     Unmanaged,
     Unavailable,
+    #[default]
     Disconnected,
     Connecting,
     Connected,

@@ -22,7 +22,7 @@ use zbus::Connection;
 use crate::{
     battery::worker::spawn_battery_worker,
     nm::{net_main::network_task_catalyst, network_manager_proxy::NetworkManagerProxy},
-    structs::net::{NetStatistics, ZbusCon},
+    structs::net::{DeviceStatus, NetStatistics, ZbusCon},
 };
 
 mod auth;
@@ -58,7 +58,8 @@ mod ws;
             crate::structs::ws::SubscriptionTopic,
             crate::structs::ws::SubscriptionEvent,
             crate::structs::ws::IncomingMessage<NetStatistics>,
-            crate::structs::ws::IncomingMessage<Option<String>>,
+            crate::structs::net::DeviceStatus,
+            crate::structs::ws::IncomingMessage<DeviceStatus>,
             crate::battery::BatteryInfo,
             crate::structs::ws::IncomingMessage<BatteryInfo>,
             crate::structs::ws::IncomingMessage<bool>,
@@ -123,7 +124,7 @@ pub struct AppState {
     pub _pool: SqlitePool,
     pub zbus_con: ZbusCon,
     pub interface_stats: watch::Sender<NetStatistics>,
-    pub interface_ip: watch::Sender<Option<String>>,
+    pub device_status: watch::Sender<DeviceStatus>,
     pub battery_channel: broadcast::Sender<BatteryInfo>,
     pub critical_channel: watch::Sender<()>,
     pub critical_state: Arc<RwLock<bool>>,
@@ -157,7 +158,7 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
     let zbus_con = (connection, wlan0);
 
     let interface_stats = watch::Sender::<NetStatistics>::new(NetStatistics::default());
-    let interface_ip = watch::Sender::<Option<String>>::new(None);
+    let device_status = watch::Sender::<DeviceStatus>::new(DeviceStatus::default());
     let battery_channel = broadcast::Sender::<BatteryInfo>::new(16);
     let critical_channel = watch::Sender::<()>::new(());
     let critical_state = Arc::new(RwLock::new(false));
@@ -168,7 +169,7 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         _pool: pool.clone(),
         zbus_con: zbus_con.clone(),
         interface_stats,
-        interface_ip,
+        device_status,
         battery_channel,
         critical_channel,
         critical_state,

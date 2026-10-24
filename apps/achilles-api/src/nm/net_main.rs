@@ -20,7 +20,7 @@ use tracing::{error, info};
 
 use crate::{
     nm::{
-        device_proxy::{DeviceProxy, get_device_status},
+        device_proxy::{DeviceProxy, get_device_ipv4, get_device_status},
         helpers::wireless_proxy,
     },
     routes::AppState,
@@ -189,20 +189,31 @@ pub async fn spawn_active_connection_worker(app_state: Arc<AppState>) -> Result<
                 info!("Inital Interface Status Changed: {:?}", status);
                 if status == DeviceStatus::Connected {
                     // HACK: unwarps here
-                    let ip = dev_proxy.ip_interface().await.unwrap();
+                    let ip = get_device_ipv4(&dev_proxy, &app_state.zbus_con.0)
+                        .await
+                        .ok();
 
-                    let _ = app_state.interface_ip.send(Some(ip.clone()));
+                    let _ = app_state
+                        .device_status
+                        .send(crate::structs::net::DeviceStatus {
+                            status,
+                            ip: ip.clone(),
+                        });
 
                     let _ = app_state.status_socket.send(StatusMessage {
                         sender: common::People::HelloItsMeAchillesOwchMyHeal,
-                        payload: StatusPayload::IntIP { ip },
+                        payload: StatusPayload::IntStatus { status, ip },
+                    });
+                } else {
+                    let _ = app_state
+                        .device_status
+                        .send(crate::structs::net::DeviceStatus { status, ip: None });
+
+                    let _ = app_state.status_socket.send(StatusMessage {
+                        sender: common::People::HelloItsMeAchillesOwchMyHeal,
+                        payload: StatusPayload::IntStatus { status, ip: None },
                     });
                 }
-
-                let _ = app_state.status_socket.send(StatusMessage {
-                    sender: common::People::HelloItsMeAchillesOwchMyHeal,
-                    payload: StatusPayload::IntStatus { status },
-                });
             }
             Err(_) => {
                 error!("Failed To Get Device Status");
@@ -222,20 +233,28 @@ pub async fn spawn_active_connection_worker(app_state: Arc<AppState>) -> Result<
 
                             if status == DeviceStatus::Connected {
                                 // HACK: unwarps here
-                                let ip = dev_proxy.ip_interface().await.unwrap();
+                                let ip = get_device_ipv4(&dev_proxy, &app_state.zbus_con.0)
+                                    .await
+                                    .ok();
 
-                                let _ = app_state.interface_ip.send(Some(ip.clone()));
+                                let _ = app_state
+                                    .device_status
+                                    .send(crate::structs::net::DeviceStatus { status, ip: ip.clone() });
 
                                 let _ = app_state.status_socket.send(StatusMessage {
                                     sender: common::People::HelloItsMeAchillesOwchMyHeal,
-                                    payload: StatusPayload::IntIP { ip },
+                                    payload: StatusPayload::IntStatus { status, ip },
+                                });
+                            } else {
+                                let _ = app_state
+                                    .device_status
+                                    .send(crate::structs::net::DeviceStatus { status, ip: None });
+
+                                let _ = app_state.status_socket.send(StatusMessage {
+                                    sender: common::People::HelloItsMeAchillesOwchMyHeal,
+                                    payload: StatusPayload::IntStatus { status, ip: None },
                                 });
                             }
-
-                            let _ = app_state.status_socket.send(StatusMessage {
-                                sender: common::People::HelloItsMeAchillesOwchMyHeal,
-                                payload: StatusPayload::IntStatus { status },
-                            });
                         }
                         Err(_) => {
                             error!("Failed To Get Device Status");

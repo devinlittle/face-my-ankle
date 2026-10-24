@@ -177,7 +177,7 @@ rc-update add dnsmasq-ap default
 
 rc-update add dbus default
 rc-update add udev sysinit
-rc-update add udev-trigger sysinit # maybe remove this?
+rc-update add udev-trigger sysinit
 
 rc-update add wpa_supplicant default
 

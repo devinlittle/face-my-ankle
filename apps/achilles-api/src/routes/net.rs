@@ -210,8 +210,8 @@ pub async fn get_ap_info(
 pub async fn get_ip(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Option<String>>, StatusCode> {
-    let ip = state.interface_ip.borrow().clone();
-    Ok(Json(ip))
+    let status = state.device_status.borrow().clone();
+    Ok(Json(status.ip))
 }
 
 /*

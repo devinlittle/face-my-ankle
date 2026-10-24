@@ -53,3 +53,9 @@ pub struct WifiConnectInput {
     pub ssid: String,
     pub password: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, ToSchema)]
+pub struct DeviceStatus {
+    pub status: common::DeviceStatus,
+    pub ip: Option<String>,
+}

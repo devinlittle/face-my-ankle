@@ -1,6 +1,7 @@
 pub mod access_point_proxy;
 pub mod active_proxy;
 pub mod device_proxy;
+pub mod ip4config_proxy;
 pub mod loopback_proxy;
 pub mod network_manager_proxy;
 pub mod settings_connection_proxy;

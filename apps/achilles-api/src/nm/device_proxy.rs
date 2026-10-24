@@ -19,8 +19,16 @@
 //!
 //! [Writing a client proxy]: https://z-galaxy.github.io/zbus/client.html
 //! [D-Bus standard interfaces]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces,
+use std::collections::HashMap;
+
+use anyhow::Result;
 use common::DeviceStatus;
-use zbus::proxy;
+use zbus::{
+    Connection, proxy,
+    zvariant::{OwnedObjectPath, OwnedValue},
+};
+
+use crate::nm::ip4config_proxy::IP4ConfigProxy;
 #[proxy(
     interface = "org.freedesktop.NetworkManager.Device",
     default_service = "org.freedesktop.NetworkManager",
@@ -222,4 +230,35 @@ pub async fn get_device_status(device: &DeviceProxy<'_>) -> zbus::Result<DeviceS
 
         other => DeviceStatus::Unrecognized(other),
     })
+}
+
+pub async fn get_device_ipv4(device: &DeviceProxy<'_>, conn: &Connection) -> Result<String> {
+    let ip4_config_path = device.ip4_config().await?;
+
+    if ip4_config_path.as_str() == "/" {
+        return Err(anyhow::anyhow!("Device has no Ip4Config"));
+    }
+
+    let ip4_config = IP4ConfigProxy::builder(conn)
+        .path(&ip4_config_path)?
+        .build()
+        .await?;
+
+    let address_data: Vec<HashMap<String, OwnedValue>> = ip4_config
+        .address_data()
+        .await
+        .map_err(|_| anyhow::anyhow!("Retreiving address data failed"))?;
+
+    let first = address_data
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("No addresses in AddressData"))?;
+
+    let address = first
+        .get(&"address".to_string())
+        .ok_or_else(|| anyhow::anyhow!("Missing 'address' key"))?
+        .downcast_ref::<&str>()
+        .map(|s| s.to_string())?;
+
+    Ok(address)
 }

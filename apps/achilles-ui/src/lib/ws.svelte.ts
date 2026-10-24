@@ -1,9 +1,12 @@
 import { API_URL } from "$app/env/public"
 import { SvelteSet } from "svelte/reactivity";
-import { auth } from "./auth.svelte";
-import { handleNetworkStatistics } from "./net.svelte";
+
 import type { components } from "./types/api";
+import { handleNetworkStatistics } from "./net.svelte";
 import { handleBatteryInfo, handleCritical } from "./battery.svelte";
+import { handleDeviceStatus } from "./device_status.svelte";
+
+//import { auth } from "./auth.svelte";
 
 type IncomingMessage = {
   topic: components["schemas"]["SubscriptionTopic"]
@@ -14,6 +17,9 @@ type SubscriptionEvent = components["schemas"]["SubscriptionEvent"];
 type SubscriptionTopic = components["schemas"]["SubscriptionTopic"];
 type NetStatistics = components["schemas"]["NetStatistics"];
 type BatteryInfo = components["schemas"]["BatteryInfo"]
+
+// TODO: update this type to not be so conveluted
+type DeviceStatus = components["schemas"]["IncomingMessage_DeviceStatus"]["payload"]
 
 let _socketState = $state<"connected" | "connecting" | "disconnected" | "intial_page">("intial_page");
 
@@ -41,7 +47,9 @@ function updateSocketState(newStatus: "connected" | "connecting" | "disconnected
 function handleMessage(msg: IncomingMessage) {
   switch (msg.topic) {
     case "wifi_scan":
-    case "device_status":
+    case "device_status": {
+      handleDeviceStatus(msg.payload as DeviceStatus)
+    }
     case "network_metrics": {
       handleNetworkStatistics(msg.payload as NetStatistics)
     }
@@ -94,7 +102,7 @@ export function connectWS() {
 
     try {
       const msg = JSON.parse(e.data) as IncomingMessage
-      if (!msg.topic) return // drop anything without a namespace
+      if (!msg.topic) return // drop anything without a topic
       handleMessage(msg)
     } catch {
       // not json, ignore
@@ -142,6 +150,7 @@ export function subscribe(topics: SubscriptionTopic[]) {
     action: "subscribe",
     topics
   }
+
   let sub_json = JSON.stringify(sub);
 
   getSocket()?.send(sub_json);
@@ -157,6 +166,7 @@ export function unsubscribe(topics: SubscriptionTopic[]) {
     action: "unsubscribe",
     topics
   }
+
   let sub_json = JSON.stringify(sub);
 
   getSocket()?.send(sub_json);
