@@ -21,7 +21,7 @@ pub async fn spawn_battery_worker(app_state: Arc<AppState>) -> Result<JoinHandle
                 _ = ticker.tick() => {
                     let bus_v = ina219.bus_voltage_v().unwrap_or_default();
                     let _shunt_mv = ina219.shunt_voltage_mv().unwrap_or_default();
-                    let current_a = ina219.current_a().unwrap_or_default() / 1000.0;
+                    let current_a = ina219.current_a().unwrap_or_default() * 1000.0;
                     let power_w = ina219.power_w().unwrap_or_default();
 
                     let percent = match bus_v {
