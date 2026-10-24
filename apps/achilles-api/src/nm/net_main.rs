@@ -2,7 +2,7 @@
 //! spawned and the file they live in.
 
 use anyhow::Result;
-use common::{StatusMessage, StatusPayload};
+use common::{DeviceStatus, StatusMessage, StatusPayload};
 use futures_util::StreamExt;
 use std::{
     fs::File,
@@ -187,6 +187,18 @@ pub async fn spawn_active_connection_worker(app_state: Arc<AppState>) -> Result<
         match get_device_status(&dev_proxy).await {
             Ok(status) => {
                 info!("Inital Interface Status Changed: {:?}", status);
+                if status == DeviceStatus::Connected {
+                    // HACK: unwarps here
+                    let ip = dev_proxy.ip_interface().await.unwrap();
+
+                    let _ = app_state.interface_ip.send(Some(ip.clone()));
+
+                    let _ = app_state.status_socket.send(StatusMessage {
+                        sender: common::People::HelloItsMeAchillesOwchMyHeal,
+                        payload: StatusPayload::IntIP { ip },
+                    });
+                }
+
                 let _ = app_state.status_socket.send(StatusMessage {
                     sender: common::People::HelloItsMeAchillesOwchMyHeal,
                     payload: StatusPayload::IntStatus { status },
@@ -207,6 +219,19 @@ pub async fn spawn_active_connection_worker(app_state: Arc<AppState>) -> Result<
                     match get_device_status(&dev_proxy).await {
                         Ok(status) => {
                             info!("Interface Status Changed: {:?}", status);
+
+                            if status == DeviceStatus::Connected {
+                                // HACK: unwarps here
+                                let ip = dev_proxy.ip_interface().await.unwrap();
+
+                                let _ = app_state.interface_ip.send(Some(ip.clone()));
+
+                                let _ = app_state.status_socket.send(StatusMessage {
+                                    sender: common::People::HelloItsMeAchillesOwchMyHeal,
+                                    payload: StatusPayload::IntIP { ip },
+                                });
+                            }
+
                             let _ = app_state.status_socket.send(StatusMessage {
                                 sender: common::People::HelloItsMeAchillesOwchMyHeal,
                                 payload: StatusPayload::IntStatus { status },

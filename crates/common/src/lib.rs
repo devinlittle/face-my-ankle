@@ -29,6 +29,10 @@ pub enum StatusPayload {
         status: DeviceStatus,
     },
 
+    IntIP {
+        ip: String,
+    },
+
     BatteryInfo {
         data: BatteryInfo,
     },

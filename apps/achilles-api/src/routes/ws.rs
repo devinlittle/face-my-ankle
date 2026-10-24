@@ -66,6 +66,7 @@ pub async fn ws(
         */
 
         let mut interface_stats_rx = state.interface_stats.subscribe();
+        let mut ip_interface_rx = state.interface_ip.subscribe();
         let mut battery_info_rx = state.battery_channel.subscribe();
 
         let mut critical_rx = state.critical_channel.subscribe();
@@ -121,6 +122,25 @@ pub async fn ws(
                             };
 
                             let Ok(json) = serde_json::to_string(&stats) else { break; };
+
+                            let _ = socket.send(Message::Text(json.into())).await;
+                        }
+                        Err(_) => {
+                            break;
+                        }
+                    }
+                }
+                result = ip_interface_rx.changed(), if subs.device_status => {
+                    match result {
+                        Ok(()) => {
+                            let ip = ip_interface_rx.borrow_and_update().to_owned();
+
+                            let ip: IncomingMessage<Option<String>> = IncomingMessage {
+                                topic: NetworkMetrics,
+                                payload: ip,
+                            };
+
+                            let Ok(json) = serde_json::to_string(&ip) else { break; };
 
                             let _ = socket.send(Message::Text(json.into())).await;
                         }
