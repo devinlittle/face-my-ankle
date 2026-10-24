@@ -4,8 +4,6 @@
 
   let battery_info_subscribed = $state<boolean>(false);
 
-  let is_critical_state = $derived(is_critical.value);
-
   function subscribe_battery_info() {
     subscribe(["battery_info"]);
     battery_info_subscribed = true;
@@ -28,9 +26,8 @@
   <p>Bat info:</p>
   <p>Percent: {battery_info.value?.bad_precent}</p>
   <p>Voltage: {battery_info.value?.voltage}</p>
-  <p>Current: {battery_info.value?.current_amps} A</p>
+  <p>Current: {battery_info.value?.current_amps} mA</p>
   <p>Power: {battery_info.value?.power_watts} W</p>
 
-  <p>critical: {is_critical.value?.valueOf()}</p>
-  <p>critical: {is_critical_state}</p>
+  <p>critical: {is_critical.value}</p>
 {/if}

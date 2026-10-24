@@ -8,11 +8,11 @@ export const battery_info = {
   set value(v: BatteryInfo | undefined) { _battery_info = v }
 };
 
-let _is_critical = $state<boolean>();
+let _is_critical = $state<boolean>(false);
 
 export const is_critical = {
   get value() { return _is_critical },
-  set value(v: boolean | undefined) { _is_critical = v }
+  set value(v: boolean) { _is_critical = v }
 };
 
 export function handleBatteryInfo(payload: BatteryInfo) {
