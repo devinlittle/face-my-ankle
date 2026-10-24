@@ -13,10 +13,7 @@ use crate::{
         connect, disconnect, forget, list_networks, request_scan, set_wifi_enabled,
     },
     routes::AppState,
-    structs::{
-        AuthenticatedUser,
-        net::{AccessPoint, SetWifiStatusInput, WifiConnectInput},
-    },
+    structs::net::{AccessPoint, SetWifiStatusInput, WifiConnectInput},
 };
 
 #[utoipa::path(
@@ -200,6 +197,21 @@ pub async fn get_ap_info(
 
     info!("Forgotton WiFi Network");
     Ok(Json(ap).into_response())
+}
+
+#[utoipa::path(
+    get,
+    path = "/net/int/ip",
+    responses(
+        (status = 200, description = "Returns Private IP", body = Option<String>),
+    ),
+    tag = "net"
+)]
+pub async fn get_ip(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Option<String>>, StatusCode> {
+    let ip = state.interface_ip.borrow().clone();
+    Ok(Json(ip))
 }
 
 /*

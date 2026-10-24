@@ -45,6 +45,7 @@ mod ws;
         crate::routes::net::disconnect_from_network,
         crate::routes::net::forget_network,
         crate::routes::net::get_ap_info,
+        crate::routes::net::get_ip,
     ),
     components(
         schemas(
@@ -207,6 +208,7 @@ pub async fn create_routes(pool: SqlitePool) -> Router {
         .route("/net/wifi/disconnect", delete(net::disconnect_from_network))
         .route("/net/wifi/{ssid}", delete(net::forget_network))
         .route("/net/wifi/{ssid}", get(net::get_ap_info))
+        .route("/net/int/ip", get(net::get_ip))
         /* .layer(axum::middleware::from_fn_with_state(
             Arc::clone(&app_state),
             crate::middleware::jwt::jwt_auth,
