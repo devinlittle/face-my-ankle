@@ -7,12 +7,15 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+ankle-face-protocol.workspace = true
 anyhow.workspace = true
 common.workspace = true
 dotenvy.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
 tracing-subscriber.workspace = true

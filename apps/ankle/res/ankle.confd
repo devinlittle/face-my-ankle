@@ -1,3 +1,4 @@
-LOG_DIR=/var/log/ankle
+FACE_ENDPOINT=https://api.devinlittle.net/face/ankleface.v1.AnkleFace
 BONE_TO_PICK=THIS_IS_A_SHARED_SECRET
+LOG_DIR=/var/log/ankle
 RUST_LOG=info

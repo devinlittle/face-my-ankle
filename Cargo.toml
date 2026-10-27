@@ -64,6 +64,7 @@ tonic = "0.14.6"
 tonic-reflection = "0.14.6"
 tonic-prost = "0.14.6"
 tonic-prost-build = "0.14.6"
+ankle-face-protocol = { version = "0.0.1", registry = "forgejo" }
 
 zbus = { version = "5.19.0", features = ["tokio"], default-features = false }
 rpi-pal = "0.22.3"

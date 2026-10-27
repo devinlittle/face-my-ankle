@@ -8,8 +8,9 @@ pidfile="/run/${RC_SVCNAME}.pid"
 output_log="/var/log/ankle/stdout.log"
 error_log="/var/log/ankle/stderr.log"
 
-export LOG_DIR
+export FACE_ENDPOINT
 export BONE_TO_PICK
+export LOG_DIR
 export RUST_LOG
 
 start_pre() {
