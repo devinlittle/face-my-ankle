@@ -1,0 +1,2 @@
+[registries.forgejo]
+index = "sparse+https://git.home.devinlittle.net/api/packages/devin/cargo/"
