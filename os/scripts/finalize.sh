@@ -4,13 +4,24 @@ cat >/boot/config.txt <<EOF
 kernel=vmlinuz-rpi
 initramfs initramfs-rpi
 arm_64bit=1
-dtparam=i2c_arm=on
-include usercfg.txt
+include cfg_usercfg.txt
+include cfg_camera.txt
+include cfg_i2c.txt
 EOF
 
-cat >/boot/usercfg.txt <<EOF
+cat >/boot/cfg_usercfg.txt <<EOF
 disable_splash=1
 enable_uart=1
+EOF
+
+cat >/boot/cfg_camera.txt <<EOF
+camera_auto_detect=0
+dtoverlay=vc4-kms-v3d
+dtoverlay=arducam-pivariety
+EOF
+
+cat >/boot/cfg_i2c.txt <<EOF
+dtparam=i2c_arm=on
 EOF
 
 cat >/boot/cmdline.txt <<EOF
@@ -191,4 +202,11 @@ EOF
 
 rc-update add networkmanager default
 
+# camera stuff
+
+echo "bcm2835-v4l2" >/etc/modules-load.d/brcm-v4l2.conf
+# TODO: copy the ffmpeg service il make later
+# 	enable the ffmpeg service to run after modules-load
+
+# cleanup
 rm -f /*.tar.*

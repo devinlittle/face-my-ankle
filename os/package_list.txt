@@ -32,4 +32,11 @@ hostapd
 wpa_supplicant
 eudev
 
+# For Camera
+ffmpeg
+libcamera
+libcamera-raspberrypi
+libcamera-v4l2
+libcamera-tools
+
 # add i2c-tools for debugging cuz hat address can change?
