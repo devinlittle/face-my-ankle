@@ -6,9 +6,11 @@ echo
 just doctor
 echo
 
-IMAGE_SIZE="1G"                                       # and this is the size of the entire image
+IMAGE_SIZE="1.5G"                                     # and this is the size of the entire image
 BOOT_SIZE="512M"                                      # this is the size of /boot
 PACKAGES=$(grep -v '^[[:space:]]*#' package_list.txt) # essentailly `cat`s out the file without comments
+
+mkdir $APK_CACHE_DIR
 
 if [ ! -d "$MOUNT" ]; then
   info "Creating Build Dir"
@@ -56,6 +58,8 @@ sudoif mount "$BOOT_DEV" "$MOUNT/boot"
 
 info "Bootstrapping Alpine packages..."
 sudoif apk --root "$MOUNT" --initdb --allow-untrusted \
+  --cache-dir $APK_CACHE_DIR \
+  --update-cache \
   --keys-dir /etc/apk/keys \
   --repository https://dl-cdn.alpinelinux.org/alpine/latest-stable/main \
   --repository https://dl-cdn.alpinelinux.org/alpine/latest-stable/community \

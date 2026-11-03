@@ -28,9 +28,10 @@ warn() {
 SCRIPT_DIR="$(printf $(cd ../ && pwd))"
 
 BUILD="$SCRIPT_DIR/os/build"
+APK_CACHE_DIR="$SCRIPT_DIR/.apk_cache/"
 SCRIPTS_DIR="$SCRIPT_DIR/os/scripts"
 IMAGE="$BUILD/Ankle.img"
 MOUNT="$BUILD/mount"
 
 export -f sudoif info warn die
-export SCRIPT_DIR BUILD SCRIPTS_DIR IMAGE MOUNT
+export SCRIPT_DIR BUILD SCRIPTS_DIR IMAGE MOUNT APK_CACHE_DIR

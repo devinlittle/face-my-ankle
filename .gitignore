@@ -1,6 +1,7 @@
 # Build Artifacts
 /target/
 node_modules/
+.apk_cache/
 
 # OS Specific
 .DS_STORE
