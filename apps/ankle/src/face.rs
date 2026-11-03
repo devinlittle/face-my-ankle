@@ -1,4 +1,5 @@
 //! Similar to the `status` module with a similar goal.
+//! that is, maintaining a connection
 
 use anyhow::Result;
 use common::{DeviceStatus, StatusMessage, StatusPayload::IntStatus};
@@ -9,12 +10,11 @@ use tokio::{
     time::sleep,
 };
 use tokio_stream::empty;
-use tonic::{metadata::MetadataValue, Request};
+use tonic::{Request, metadata::MetadataValue};
 use tracing::{debug, error, info};
 
-use ankle_face_protocol::ankleface::{ankle_face_client::AnkleFaceClient, event::Payload, Event};
-
 use crate::secrets::SECRETS;
+use ankle_face_protocol::ankleface::{Event, ankle_face_client::AnkleFaceClient, event::Payload};
 
 pub async fn maintain_connection(
     mut status_rx: broadcast::Receiver<StatusMessage>,
@@ -31,7 +31,7 @@ pub async fn maintain_connection(
                         match status.payload {
                             IntStatus { status, ip } => {
                                 drop(ip); // = i hate u ip
-                                println!("Got Status: {:?}", status);
+                                info!("Got Interface Status: {:?}", status);
                                 if status == DeviceStatus::Connected {
                                     if connection_task.is_none() {
                                         let handle = tokio::spawn(handle_connection(facereq_tx.clone(), shutdown_rx.clone()));
@@ -65,27 +65,35 @@ async fn handle_connection(
     loop {
         {
             info!("Connecting to `face`");
-            let mut client = AnkleFaceClient::connect(SECRETS.face_endpoint.clone()).await?;
+            let Ok(mut client) = AnkleFaceClient::connect(SECRETS.face_endpoint.clone()).await
+            else {
+                continue;
+            };
 
             let outbound = empty::<Event>();
             let mut request = Request::new(outbound);
 
-            let auth_value = MetadataValue::try_from(format!("Basic {}", SECRETS.bone_to_pick))?;
+            let Ok(auth_value) = MetadataValue::try_from(format!("Basic {}", SECRETS.bone_to_pick))
+            else {
+                continue;
+            };
 
             request.metadata_mut().insert("authorization", auth_value);
 
-            let response = client.connect_face(request).await?;
+            let Ok(response) = client.connect_face(request).await else {
+                continue;
+            };
 
             info!("Succesfully connected to the `face`");
 
             let mut inbound = response.into_inner();
 
             while let Some(event) = inbound.message().await? {
-                println!("received event: {event:?}");
+                info!("received event: {event:?}");
                 match event.payload {
                     Some(payload) => match payload {
                         Payload::BlinkLed(led) => {
-                            println!("if led should be on: {}", led.enabled);
+                            info!("if led should be on: {}", led.enabled);
                         }
                     },
                     None => {
